@@ -1,0 +1,74 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Environment variables
+.env
+
+# Django stuff:
+*.log
+db.sqlite3
+db.sqlite3-journal
+
+# Django migrations
+**/migrations/
+
+# Unit test / coverage reports
+*.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+
+# pyenv
+.python-version
+
+# Environments
+.env/
+.venv/
+venv/
+ENV/
+env/
+venv.bak/
+
+# IDEs and editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*.swn
+*.bak
+*.tmp
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Static and media files
+staticfiles/
+media/
+
+# Local settings
+local_settings.py
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# PyCharm
+*.iml
+*.iws
+.idea/
+
+# VSCode
+*.code-workspace
+.vscode/
