@@ -1,6 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.exceptions import AuthenticationFailed
+from rest_framework_simplejwt.tokens import RefreshToken
 import jwt, datetime
 from api_prenar.models.usuario import User
 
@@ -17,20 +18,11 @@ class loginView(APIView):
         if not user.check_password(password):
             raise AuthenticationFailed('Incorrect password!')
         
-        payload={
-            'id':user.id,
-            'exp':datetime.datetime.utcnow() + datetime.timedelta(minutes=60),
-            'iat':datetime.datetime.utcnow()
-        }
+        # Generar el RefreshToken y AccessToken con SimpleJWT
+        refresh = RefreshToken.for_user(user)
 
-        token= jwt.encode(payload, 'secret', algorithm='HS256')
-
-        response= Response()
-
-        response.set_cookie(key='jwt', value=token, httponly=True)
-
-        response.data={
-            'jwt':token
-        }
-
-        return response
+        # Enviar los tokens en la respuesta
+        return Response({
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+        })
