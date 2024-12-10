@@ -12,3 +12,7 @@ OPTIONS_PAYMENT_METHOD= (
     (1, 'Efectivo'),
     (2, 'Consignacion'),
 )
+
+OPTIONS_DISPATCH_STATE= (
+    (1, 'Entregado'),
+)
