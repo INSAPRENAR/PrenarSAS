@@ -1,9 +1,8 @@
 from django.db import models
-from api_prenar.models import Pedido, Producto
+from api_prenar.models import Pedido
 
 class Inventario(models.Model):
     id=models.AutoField(primary_key=True)
-    id_producto=models.OneToOneField(Producto, on_delete=models.CASCADE)
     inventory_date=models.DateField()
     id_pedido=models.OneToOneField(Pedido, on_delete=models.CASCADE)
     number_upload=models.CharField()
