@@ -13,3 +13,4 @@ class Material(models.Model):
     registration_date=models.DateField(auto_now_add=True)
 
 
+

@@ -6,3 +6,5 @@ from .inventario import Inventario
 from .producto import Producto
 from .calendario import Calendario
 from .despacho import Despacho
+from .material import Material
+from .consumo_material import ConsumoMaterial
