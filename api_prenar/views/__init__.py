@@ -7,3 +7,4 @@ from .userView import UserView
 from .userDetailView import UserDetail
 from .clienteView import ClientesView
 from .clienteEspecificoView import ClienteEspecificoView
+from .pedidoView import PedidoView

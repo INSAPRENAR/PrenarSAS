@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import Register, loginView, UsersView, LogoutView, ListUserView, UserView, UserDetail, ClientesView, ClienteEspecificoView
+from .views import Register, loginView, UsersView, LogoutView, ListUserView, UserView, UserDetail, ClientesView, ClienteEspecificoView, PedidoView
 
 urlpatterns = [
     path('register', Register.as_view(), name='register'),
@@ -10,9 +10,13 @@ urlpatterns = [
     path('user/<int:user_id>', UserView.as_view(), name='user_detail'),
     path('user/<int:user_id>/update', UserDetail.as_view(), name='user-update'),
     path('user/<int:user_id>/delete', UserDetail.as_view(), name='user-delete'),
-    path('cliente', ClientesView.as_view(), name='cliente'),
+    path('clientes', ClientesView.as_view(), name='cliente'),
     path('cliente/register', ClientesView.as_view(), name='cliente-register'),
     path('cliente/<int:cliente_id>/update', ClientesView.as_view(), name='cliente-update'),
     path('cliente/<int:cliente_id>/delete', ClientesView.as_view(), name='cliente-delete'),
     path('cliente/<int:cliente_id>/detail', ClienteEspecificoView.as_view(), name='cliente-detail'),
+    path('pedido/register', PedidoView.as_view(), name='pedido-register'),
+    path('pedidos/cliente/<int:cliente_id>', PedidoView.as_view(), name='listPedidos'),
+    path('pedidos/pedido/<int:pedido_id>/update', PedidoView.as_view(), name='pedido-update'),
+    path('pedidos/pedido/<int:pedido_id>/delete', PedidoView.as_view(), name='pedido-update'),
 ]
