@@ -34,3 +34,17 @@ class UserDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'name', 'email', 'password', 'role']
+
+class UserDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id','name','email','role']
+        extra_kwargs = {
+            'password': {'write_only': True} 
+        }
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        # Convierte el campo `role` al valor de visualización
+        representation['role'] = instance.get_role_display()
+        return representation
