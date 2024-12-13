@@ -5,7 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from django.core.exceptions import PermissionDenied
 from rest_framework.exceptions import AuthenticationFailed
 import jwt
-from api_prenar.serializers.userSerializers import UserSerializer
+from api_prenar.serializers.userSerializers import UserDetailSerializer
 
 class ListUserView(APIView):
     permission_classes = [IsAuthenticated]
@@ -17,6 +17,6 @@ class ListUserView(APIView):
         
         # Si el usuario es superusuario, obtenemos solo los usuarios que no son superusuarios
         users = User.objects.filter(is_superuser=False)
-        serializer = UserSerializer(users, many=True)
+        serializer = UserDetailSerializer(users, many=True)
         
         return Response(serializer.data)
