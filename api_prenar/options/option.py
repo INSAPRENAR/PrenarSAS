@@ -1,6 +1,7 @@
 OPTIONS_ROL = (
-    (1, 'admin'),
-    (2, 'comercial'),
+    (1, 'superUsuario'),
+    (2, 'admin'),
+    (3, 'comercial'),
 )
 
 OPTIONS_COMPANY = (
