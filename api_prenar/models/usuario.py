@@ -28,7 +28,7 @@ class User(AbstractUser):
     email = models.EmailField(unique=True)
     password = models.CharField(max_length=255)
     username = None
-    role = models.IntegerField(choices=OPTIONS_ROL, null=True, blank=True)
+    role = models.IntegerField(choices=OPTIONS_ROL, null=True, blank=True, default=1)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
