@@ -10,7 +10,7 @@ class Pedido(models.Model):
     delivery_date=models.DateField()
     address=models.CharField(max_length=255, null=True, blank=True)
     phone=models.CharField(max_length=15, null=True, blank=True)
-    total=models.FloatField()
+    total=models.FloatField(default=0.0)
     state=models.IntegerField()
     outstanding_balance=models.FloatField()
     products=models.JSONField()
