@@ -55,7 +55,7 @@ class PedidoView(APIView):
         try:
             pedido=Pedido.objects.get(id=pedido_id)
         except Pedido.DoesNotExist:
-            Response(
+            return Response(
                 {"message":"Pedido no encontrado"},
                 status=status.HTTP_404_NOT_FOUND
             )
