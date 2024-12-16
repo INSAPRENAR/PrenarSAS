@@ -12,10 +12,16 @@ class Pedido(models.Model):
     phone=models.CharField(max_length=15, null=True, blank=True)
     total=models.FloatField(default=0.0)
     state=models.IntegerField()
-    outstanding_balance=models.FloatField()
+    outstanding_balance=models.FloatField(default=0.0)
     products=models.JSONField()
     company=models.IntegerField(choices=OPTIONS_COMPANY)
     email_user=models.EmailField()
     registration_date=models.DateField(auto_now_add=True)
     #cantidad=models.IntegerField() ver si ó no
+
+    def save(self, *args, **kwargs):
+        # Si el saldo pendiente no está definido, se inicializa con el total
+        if not self.outstanding_balance:
+            self.outstanding_balance = self.total
+        super().save(*args, **kwargs)
 

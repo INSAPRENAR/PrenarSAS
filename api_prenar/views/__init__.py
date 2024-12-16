@@ -8,3 +8,4 @@ from .userDetailView import UserDetail
 from .clienteView import ClientesView
 from .clienteEspecificoView import ClienteEspecificoView
 from .pedidoView import PedidoView
+from .pagoView import PagoView
