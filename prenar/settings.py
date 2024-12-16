@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
+from datetime import timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -143,4 +144,12 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
+}
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(hours=8),  # Configura el tiempo deseado (por defecto son 8 horas)
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),     # Configura el tiempo deseado para el token de refresco
+    'ROTATE_REFRESH_TOKENS': False,                 # Opcional: evita rotar el refresh token
+    'BLACKLIST_AFTER_ROTATION': True,               # Opcional: Blacklist los tokens rotados
+    'UPDATE_LAST_LOGIN': False,                     # Opcional: Actualiza el campo `last_login` al refrescar token
 }
