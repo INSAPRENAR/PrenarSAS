@@ -20,6 +20,8 @@ class PagoView(APIView):
             
             # Guardar el pago
             serializer.save()
+
+            
             return Response(
                 {"message": "Pago registrado exitosamente.", "Pago": serializer.data},
                 status=status.HTTP_201_CREATED
