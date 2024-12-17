@@ -13,12 +13,17 @@ class PagoSerializer(serializers.ModelSerializer):
 
         if not pedido:
             raise serializers.ValidationError("El pedido es obligatorio.")
+        
+        # Verificamos si el saldo pendiente es 0 y el monto del pago es mayor que 0
+        if pedido.outstanding_balance == 0 and monto_pago > 0:
+            raise serializers.ValidationError("El pedido ya está completamente pagado.")
 
         # Verificamos si el monto del pago supera el saldo pendiente
         if monto_pago > pedido.outstanding_balance:
             raise serializers.ValidationError(
                 f"El monto del pago ({monto_pago}) supera el saldo pendiente del pedido ({pedido.outstanding_balance})."
             )
+            
 
         return data
 
@@ -33,6 +38,7 @@ class PagoSerializer(serializers.ModelSerializer):
         # Actualiza el saldo pendiente del pedido
         pedido.outstanding_balance -= validated_data['amount']
         pedido.save()
+
 
         # Crea y retorna el registro de pago
         return super().create(validated_data)

@@ -4,7 +4,7 @@ from api_prenar.options.option import OPTIONS_COMPANY
 
 class Pedido(models.Model):
     id=models.AutoField(primary_key=True)
-    id_client=models.OneToOneField(Cliente, on_delete=models.CASCADE)
+    id_client=models.ForeignKey(Cliente, on_delete=models.CASCADE, related_name='pedidos')
     order_code=models.CharField(unique=True)
     order_date=models.DateField()
     delivery_date=models.DateField()
@@ -20,8 +20,8 @@ class Pedido(models.Model):
     #cantidad=models.IntegerField() ver si ó no
 
     def save(self, *args, **kwargs):
-        # Si el saldo pendiente no está definido, se inicializa con el total
-        if not self.outstanding_balance:
+        # Solo inicializa el saldo pendiente si es None (no ha sido asignado)
+        if self.outstanding_balance is None:
             self.outstanding_balance = self.total
         super().save(*args, **kwargs)
 

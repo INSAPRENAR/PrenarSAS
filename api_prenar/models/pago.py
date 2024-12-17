@@ -4,7 +4,7 @@ from api_prenar.options.option import OPTIONS_PAYMENT_METHOD
 
 class Pago(models.Model):
     id=models.AutoField(primary_key=True)
-    id_pedido=models.OneToOneField(Pedido, on_delete=models.CASCADE)
+    id_pedido=models.ForeignKey(Pedido, on_delete=models.CASCADE, related_name='pagos')
     receipt_number=models.CharField(unique=True)
     payment_date=models.DateField()
     amount=models.FloatField()

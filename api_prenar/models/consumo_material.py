@@ -4,8 +4,8 @@ from api_prenar.models import Material, Producto
 class ConsumoMaterial(models.Model):
     id=models.AutoField(primary_key=True)
     consumption_date=models.DateField()
-    id_material=models.OneToOneField(Material, on_delete=models.CASCADE)
-    id_producto=models.OneToOneField(Producto, on_delete=models.CASCADE)
+    id_material=models.ForeignKey(Material, on_delete=models.CASCADE, related_name='conaumo_materiales')
+    id_producto=models.ForeignKey(Producto, on_delete=models.CASCADE, related_name='consumo_materiales')
     quantity_produced=models.IntegerField()
     base_quantity_used=models.FloatField(null=True, blank=True)
     quantity_mortar_used=models.FloatField(null=True, blank=True)

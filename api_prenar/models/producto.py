@@ -6,5 +6,6 @@ class Producto(models.Model):
     name=models.CharField(max_length=255)
     description=models.CharField(max_length=255)
     unit_price=models.FloatField()
+    discounted_unit_price=models.FloatField()
     color=models.CharField(max_length=255)
     warehouse_quantity=models.IntegerField()
