@@ -12,3 +12,4 @@ from .pagoView import PagoView
 from .inventarioView import InventarioView
 from .productoView import ProductoView
 from .productoEspecificoView import ProductoEspecificoView
+from .despachoView import DespachoView
