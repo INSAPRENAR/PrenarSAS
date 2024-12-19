@@ -12,7 +12,6 @@ class Inventario(models.Model):
     not_comformal_output = models.IntegerField(default=0)
     total_production = models.IntegerField(default=0)
     total_output = models.IntegerField(default=0) 
-    balance = models.IntegerField(default=0)
     email_user=models.EmailField()
     registration_date=models.DateField(auto_now_add=True)
 
