@@ -47,15 +47,11 @@ class InventarioSerializer(serializers.ModelSerializer):
         total_production = conformal_production + not_comformal_production
         total_output = comformal_output + not_comformal_output
 
-        # Balance previo
-        previous_balance = producto.warehouse_quantity
 
         # Actualizar balance y existencia del producto
         if total_production > 0:
-            validated_data['balance'] = previous_balance + total_production
             producto.warehouse_quantity += total_production
         elif total_output > 0:
-            validated_data['balance'] = previous_balance - total_output
             producto.warehouse_quantity -= total_output
 
         # Guardar totales calculados
