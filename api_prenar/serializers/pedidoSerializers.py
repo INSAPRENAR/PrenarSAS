@@ -37,3 +37,8 @@ class PedidoSerializer(serializers.ModelSerializer):
         # Recupera el total general calculado
         validated_data['total'] = self.context.get('total_general', 0)
         return super().create(validated_data)
+
+class ListaNumerosPedidoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Pedido
+        fields = ['id', 'order_code']

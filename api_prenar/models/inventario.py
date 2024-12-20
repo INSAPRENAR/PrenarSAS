@@ -1,10 +1,12 @@
 from django.db import models
 from .producto import Producto
+from .pedido import Pedido
 
 class Inventario(models.Model):
     id=models.AutoField(primary_key=True)
     inventory_date=models.DateField()
     id_producto = models.ForeignKey(Producto, on_delete=models.CASCADE, related_name='inventarios')
+    id_pedido= models.ForeignKey(Pedido, on_delete=models.CASCADE, related_name='inventarios')
     number_upload=models.CharField(null=True, blank=True)
     conformal_production = models.IntegerField(default=0)
     not_comformal_production = models.IntegerField(default=0)

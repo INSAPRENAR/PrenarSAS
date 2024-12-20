@@ -13,3 +13,5 @@ from .inventarioView import InventarioView
 from .productoView import ProductoView
 from .productoEspecificoView import ProductoEspecificoView
 from .despachoView import DespachoView
+from .listaPorductosDespachoView import ProductosPedidoDespachoView
+from .listaNumerosPedidosView import ListaNumerosPedidosView

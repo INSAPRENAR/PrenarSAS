@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import Register, loginView, UsersView, LogoutView, ListUserView, UserView, UserDetail, ClientesView, ClienteEspecificoView, PedidoView, PagoView, InventarioView, ProductoView, ProductoEspecificoView, DespachoView
+from .views import Register, loginView, UsersView, LogoutView, ListUserView, UserView, UserDetail, ClientesView, ClienteEspecificoView, PedidoView, PagoView, InventarioView, ProductoView, ProductoEspecificoView, DespachoView, ProductosPedidoDespachoView, ListaNumerosPedidosView
 
 urlpatterns = [
     path('register', Register.as_view(), name='register'),
@@ -30,4 +30,6 @@ urlpatterns = [
     path('producto/<int:producto_id>/delete', ProductoView.as_view(), name='producto-delete'),
     path('despacho/register', DespachoView.as_view(), name='despacho-register'),
     path('despacho/<int:despacho_id>/delete', DespachoView.as_view(), name='despacho-delete'),
+    path('despacho/lista/productos/<int:pedido_id>', ProductosPedidoDespachoView.as_view(), name='lista-productos-despacho'),
+    path('lista/pedidos/numero/pendientes', ListaNumerosPedidosView.as_view(), name='lista-numero-pedidos-pendientes'),
 ]
