@@ -14,6 +14,9 @@ class InventarioSerializer(serializers.ModelSerializer):
         conformal_production = data.get('conformal_production', 0)
         not_comformal_production = data.get('not_comformal_production', 0)
         total_production = conformal_production + not_comformal_production
+        conformal_output = data.get('comformal_output', 0)
+        not_comformal_output = data.get('not_comformal_output', 0)
+        total_output = conformal_output + not_comformal_output
 
         # Obtenemos el producto y el pedido relacionados
         producto = data.get('id_producto')
@@ -25,7 +28,7 @@ class InventarioSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("El campo 'id_pedido' es obligatorio.")
 
         # Validar que no se registren simultáneamente producción y salida
-        if total_production > 0 and (data.get('comformal_output', 0) > 0 or data.get('not_comformal_output', 0) > 0):
+        if total_production > 0 and total_output > 0:
             raise serializers.ValidationError("No se puede registrar producción y salida al mismo tiempo.")
 
         # Calcular la producción acumulada para este producto y pedido
@@ -52,10 +55,19 @@ class InventarioSerializer(serializers.ModelSerializer):
         return data
 
     def create(self, validated_data):
+        """
+        Cálculo y actualización de los campos totales y balance, incluyendo la cantidad de almacén del producto.
+        """
         conformal_production = validated_data.get('conformal_production', 0)
         not_comformal_production = validated_data.get('not_comformal_production', 0)
         total_production = conformal_production + not_comformal_production
+
+        conformal_output = validated_data.get('comformal_output', 0)
+        not_comformal_output = validated_data.get('not_comformal_output', 0)
+        total_output = conformal_output + not_comformal_output
+
         validated_data['total_production'] = total_production
+        validated_data['total_output'] = total_output
 
         pedido = validated_data.get('id_pedido')
         producto = validated_data.get('id_producto')
@@ -76,6 +88,22 @@ class InventarioSerializer(serializers.ModelSerializer):
             # Actualizar el campo products del pedido
             pedido.products = products
             pedido.save()
+
+        # Actualizar la cantidad de almacén del producto
+        if producto:
+            # Si la producción es mayor a 0, sumamos a la cantidad de almacén
+            if total_production > 0:
+                producto.warehouse_quantity += total_production
+            # Si la salida es mayor a 0, restamos de la cantidad de almacén
+            if total_output > 0:
+                producto.warehouse_quantity -= total_output
+
+            # Validar que la cantidad en almacén no sea negativa
+            if producto.warehouse_quantity < 0:
+                raise serializers.ValidationError(
+                    f"La cantidad en almacén del producto {producto.name} no puede ser negativa."
+                )
+            producto.save()
 
         # Crear el registro de inventario
         return super().create(validated_data)
