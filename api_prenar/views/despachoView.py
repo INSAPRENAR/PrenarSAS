@@ -2,7 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from api_prenar.serializers.despachoSerializers import DespachoSerializer
-from api_prenar.models import Pedido, Despacho
+from api_prenar.models import Pedido, Despacho, Producto
 
 class DespachoView(APIView):
     def post(self, request):
@@ -43,6 +43,22 @@ class DespachoView(APIView):
                         status=status.HTTP_400_BAD_REQUEST
                     )
 
+                # Obtener el producto relacionado
+                producto_model = Producto.objects.get(id=id_producto)
+
+                # Validar que haya suficiente cantidad en almacén
+                if producto_model.warehouse_quantity < amount:
+                    return Response(
+                        {
+                            "message": f"La cantidad en almacén ({producto_model.warehouse_quantity}) no es suficiente para el despacho solicitado ({amount})."
+                        },
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
+                # Restar el valor de `amount` al campo `warehouse_quantity` del producto
+                producto_model.warehouse_quantity -= amount
+                producto_model.save()
+
                 # Crear el despacho
                 despacho = serializer.save()
                 return Response(
@@ -58,6 +74,11 @@ class DespachoView(APIView):
                     {"message": f"No se encontró el pedido con ID {id_pedido}."},
                     status=status.HTTP_404_NOT_FOUND
                 )
+            except Producto.DoesNotExist:
+                return Response(
+                    {"message": f"No se encontró el producto con ID {id_producto}."},
+                    status=status.HTTP_404_NOT_FOUND
+                )
             except Exception as e:
                 return Response(
                     {"message": "Error al registrar el despacho.", "error": str(e)},
@@ -71,16 +92,31 @@ class DespachoView(APIView):
         )
     
     def delete(self, request, despacho_id):
-        
         try:
+            # Obtener el despacho por su ID
             despacho = Despacho.objects.get(id=despacho_id)
+
+            # Obtener el producto relacionado
+            producto = despacho.id_producto
+
+            if not producto:
+                return Response(
+                    {"message": "El despacho no tiene un producto relacionado."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Sumar el valor de `amount` al campo `warehouse_quantity` del producto
+            producto.warehouse_quantity += despacho.amount
+            producto.save()
 
             # Eliminar el despacho
             despacho.delete()
+
             return Response(
                 {"message": f"Despacho con ID {despacho_id} eliminado exitosamente."},
                 status=status.HTTP_200_OK
             )
+
         except Despacho.DoesNotExist:
             return Response(
                 {"message": f"Despacho con ID {despacho_id} no encontrado."},

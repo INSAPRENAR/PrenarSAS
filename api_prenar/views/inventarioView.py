@@ -37,12 +37,38 @@ class InventarioView(APIView):
 
             # Verificar si hay un producto relacionado
             producto = inventario.id_producto
+            pedido = inventario.id_pedido
+
+            if not producto or not pedido:
+                return Response(
+                    {"message": "El inventario no está relacionado con un producto o pedido válido."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
 
             # Ajustar warehouse_quantity dependiendo de producción o salida
             if inventario.total_production > 0:
                 producto.warehouse_quantity -= inventario.total_production
+
+                # Ajustar el campo control del producto en el pedido
+                products = pedido.products  # JSON de productos
+                for prod in products:
+                    if prod.get('referencia') == producto.id:  # Comparar por el campo de referencia
+                        prod['control'] += inventario.total_production
+                        break  # Detener la búsqueda una vez encontrado el producto
+
+                # Guardar los cambios en el pedido
+                pedido.products = products
+                pedido.save()
+
             elif inventario.total_output > 0:
                 producto.warehouse_quantity += inventario.total_output
+
+            # Validar que warehouse_quantity no sea negativa
+            if producto.warehouse_quantity < 0:
+                return Response(
+                    {"message": f"La cantidad en almacén del producto {producto.name} no puede ser negativa."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
 
             # Guardar los cambios en el producto
             producto.save()
