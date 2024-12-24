@@ -2,9 +2,40 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from api_prenar.models import Pedido, Pago
-from api_prenar.serializers.pagoSerializers import PagoSerializer
+from api_prenar.serializers.pagoSerializers import PagoSerializer, PagoDetalleSerializer
 
 class PagoView(APIView):
+
+    def get(self, request, pedido_id=None):
+        """
+        Obtiene todos los pagos relacionados con un pedido específico.
+        """
+        if not pedido_id:
+            return Response(
+                {"message": "Debe proporcionar el ID del pedido."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            # Obtener el pedido por su ID
+            pedido = Pedido.objects.get(id=pedido_id)
+
+            # Filtrar los pagos relacionados con el pedido
+            pagos = Pago.objects.filter(id_pedido=pedido)
+
+            # Serializar los pagos
+            serializer = PagoDetalleSerializer(pagos, many=True)
+
+            return Response(
+                {"message": "Pagos obtenidos exitosamente.", "pagos": serializer.data},
+                status=status.HTTP_200_OK
+            )
+        except Pedido.DoesNotExist:
+            return Response(
+                {"message": "Pedido no encontrado."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
     def post(self, request):
         serializer = PagoSerializer(data=request.data)
         
