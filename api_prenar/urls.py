@@ -33,5 +33,6 @@ urlpatterns = [
     path('despacho/lista/productos/<int:pedido_id>', ProductosPedidoDespachoView.as_view(), name='lista-productos-despacho'),
     path('lista/pedidos/numero/pendientes', ListaNumerosPedidosView.as_view(), name='lista-numero-pedidos-pendientes'),
     path('control/produccion', control_produccion_agrupado, name='control-produccion'),
+    path('pagos/pedido/<int:pedido_id>', PagoView.as_view(), name='lista-pagos-pedido'),
 
 ]

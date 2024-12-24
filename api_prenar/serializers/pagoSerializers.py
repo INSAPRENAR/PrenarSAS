@@ -42,3 +42,8 @@ class PagoSerializer(serializers.ModelSerializer):
 
         # Crea y retorna el registro de pago
         return super().create(validated_data)
+
+class PagoDetalleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Pago
+        fields = '__all__' 
