@@ -5,6 +5,37 @@ from api_prenar.serializers.inventarioSerializers import InventarioSerializer
 from api_prenar.models import Inventario
 
 class InventarioView(APIView):
+
+    def get(self, request):
+        try:
+            print("Ejecutando método GET")
+            inventarios = Inventario.objects.all().order_by("id_producto")
+            agrupado_por_producto = {}
+
+            for inventario in inventarios:
+                producto = inventario.id_producto
+                if producto.id not in agrupado_por_producto:
+                    agrupado_por_producto[producto.id] = {
+                        "id":producto.id,
+                        "referencia": producto.product_code,  # Usar product_code si no tienes reference
+                        "nombre_producto": producto.name,
+                        "color": producto.color  # Agregar el campo color
+                    }
+
+            resultado = list(agrupado_por_producto.values())
+            print(f"Resultado agrupado: {resultado}")
+
+            return Response(
+                {"message": "Inventario agrupado por producto obtenido exitosamente.", "data": resultado},
+                status=status.HTTP_200_OK
+            )
+        except Exception as e:
+            print(f"Error: {e}")
+            return Response(
+                {"message": "Error al obtener el inventario agrupado por producto.", "error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
     def post(self, request):
         serializer=InventarioSerializer(data=request.data)
         if serializer.is_valid():
