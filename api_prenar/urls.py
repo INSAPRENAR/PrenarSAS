@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import Register, loginView, UsersView, LogoutView, ListUserView, UserView, UserDetail, ClientesView, ClienteEspecificoView, PedidoView, PagoView, InventarioView, ProductoView, ProductoEspecificoView, DespachoView, ProductosPedidoDespachoView, ListaNumerosPedidosView, control_produccion_agrupado, InventarioPorProductoView
+from .views import Register, loginView, UsersView, LogoutView, ListUserView, UserView, UserDetail, ClientesView, ClienteEspecificoView, PedidoView, PagoView, InventarioView, ProductoView, ProductoEspecificoView, DespachoView, ProductosPedidoDespachoView, ListaNumerosPedidosView, control_produccion_agrupado, InventarioPorProductoView, CalendarioProduccionView, CalendarioEspecificoView
 
 urlpatterns = [
     path('register', Register.as_view(), name='register'),
@@ -36,5 +36,9 @@ urlpatterns = [
     path('pagos/pedido/<int:pedido_id>', PagoView.as_view(), name='lista-pagos-pedido'),
     path('inventario/producto', InventarioView.as_view(), name='inventario-producto'),
     path('inventarios/lista/<int:id_producto>', InventarioPorProductoView.as_view(), name='inventario-por-producto'),
-
+    path('calendario/register', CalendarioProduccionView.as_view(), name='calendario-register'),
+    path('calendario/list/<int:tipo>', CalendarioProduccionView.as_view(), name='calendario-lista'),
+    path('calendario/<str:calendario_id>', CalendarioEspecificoView.as_view(), name='calendario-detail'),
+    path('calendario/<str:calendario_id>/update', CalendarioEspecificoView.as_view(), name='calendario-update'),
+    path('calendario/<int:calendario_id>/delete', CalendarioProduccionView.as_view(), name='calendario-delete'),
 ]

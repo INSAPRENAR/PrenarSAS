@@ -5,8 +5,8 @@ OPTIONS_ROL = (
 )
 
 OPTIONS_COMPANY = (
-    (1, 'INSA'),
-    (2, 'PRENAR'),
+    (1, 'Insa'),
+    (2, 'Prenar'),
 )
 
 OPTIONS_PAYMENT_METHOD= (
@@ -16,4 +16,25 @@ OPTIONS_PAYMENT_METHOD= (
 
 OPTIONS_DISPATCH_STATE= (
     (1, 'Entregado'),
+)
+
+OPTIONS_CALENDARIO=(
+    (1, 'Produccion'),
+    (2, 'Despacho'),
+)
+
+OPTIONS_CALENDARIO_STATE=(
+    (1, 'Realizado'),
+    (2, 'No realizado'),
+)
+
+OPTIONS_CALENDARIO_MACHINE=(
+    (0, 'invalido'),
+    (1, 'Hess'),
+    (2, 'China'),
+)
+
+OPTIONS_PEDIDO_ESTADO=(
+    (1, 'Pendiente'),
+    (2, 'Completado'),
 )
