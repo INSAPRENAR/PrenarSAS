@@ -17,3 +17,5 @@ from .listaPorductosDespachoView import ProductosPedidoDespachoView
 from .listaNumerosPedidosView import ListaNumerosPedidosView
 from .controlProduccionView import control_produccion_agrupado
 from .inventarioProductoView import InventarioPorProductoView
+from .calendarioProduccionView import CalendarioProduccionView
+from .calendarioEspecificoView import CalendarioEspecificoView
