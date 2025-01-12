@@ -38,3 +38,15 @@ OPTIONS_PEDIDO_ESTADO=(
     (1, 'Pendiente'),
     (2, 'Completado'),
 )
+
+OPTIONS_MATERIAL=(
+    (1, 'Cemento'),
+    (2, 'Polvillo'),
+    (3, 'Pigmento'),
+    (4, 'Arena'),
+)
+
+OPTIONS_MATERIAL_MEDIDA=(
+    (1, 'Bultos'),
+    (2, 'Kilogramos'),
+)
