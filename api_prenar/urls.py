@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import Register, loginView, UsersView, LogoutView, ListUserView, UserView, UserDetail, ClientesView, ClienteEspecificoView, PedidoView, PagoView, InventarioView, ProductoView, ProductoEspecificoView, DespachoView, ProductosPedidoDespachoView, ListaNumerosPedidosView, control_produccion_agrupado, InventarioPorProductoView, CalendarioProduccionView, CalendarioEspecificoView
+from .views import Register, loginView, UsersView, LogoutView, ListUserView, UserView, UserDetail, ClientesView, ClienteEspecificoView, PedidoView, PagoView, InventarioView, ProductoView, ProductoEspecificoView, DespachoView, ProductosPedidoDespachoView, ListaNumerosPedidosView, control_produccion_agrupado, InventarioPorProductoView, CalendarioProduccionView, CalendarioEspecificoView, MaterialView, MaterialDetailView
 
 urlpatterns = [
     path('register', Register.as_view(), name='register'),
@@ -41,4 +41,8 @@ urlpatterns = [
     path('calendario/<str:calendario_id>', CalendarioEspecificoView.as_view(), name='calendario-detail'),
     path('calendario/<str:calendario_id>/update', CalendarioEspecificoView.as_view(), name='calendario-update'),
     path('calendario/<int:calendario_id>/delete', CalendarioProduccionView.as_view(), name='calendario-delete'),
+    path('material/register', MaterialView.as_view(), name='material-register'),
+    path('material/type', MaterialView.as_view(), name='material-type'),
+    path('material/list/<int:categoria_id>', MaterialDetailView.as_view(), name='material-list'),
+    path('material/<int:id>/delete', MaterialView.as_view(), name='material-delete'),
 ]

@@ -19,3 +19,5 @@ from .controlProduccionView import control_produccion_agrupado
 from .inventarioProductoView import InventarioPorProductoView
 from .calendarioProduccionView import CalendarioProduccionView
 from .calendarioEspecificoView import CalendarioEspecificoView
+from .materialView import MaterialView
+from .materialEspecificoView import MaterialDetailView
