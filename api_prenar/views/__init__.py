@@ -21,3 +21,5 @@ from .calendarioProduccionView import CalendarioProduccionView
 from .calendarioEspecificoView import CalendarioEspecificoView
 from .materialView import MaterialView
 from .materialEspecificoView import MaterialDetailView
+from .consumoMaterialView import ConsumoMaterialView
+from .categoriaMaterialEspecificoView import CategoriaMaterialDetail

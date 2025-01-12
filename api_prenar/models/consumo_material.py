@@ -10,5 +10,6 @@ class ConsumoMaterial(models.Model):
     quantity_produced=models.IntegerField(null=True, blank=True)
     base_quantity_used=models.FloatField(null=True, blank=True)
     quantity_mortar_used=models.FloatField(null=True, blank=True)
+    total=models.IntegerField(default=0)
     email_user=models.EmailField()
     registration_date=models.DateField(auto_now_add=True)
