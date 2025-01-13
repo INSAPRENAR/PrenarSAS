@@ -58,6 +58,6 @@ class CategoriaMaterialView(APIView):
         
         except Exception as e:
             return Response(
-                {"message": "Ocurrió un error al eliminar la categoría de material.", "error": str(e)},
+                {"message": "Ocurrió un error al eliminar la categoria de material.", "error": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
