@@ -23,7 +23,7 @@ class PedidoView(APIView):
         else:
             return Response(
                 {"message": "El cliente no tiene pedidos registrados."},
-                status=status.HTTP_404_NOT_FOUND
+                status=status.HTTP_200_OK
             )
 
     def post(self, request):
@@ -38,6 +38,10 @@ class PedidoView(APIView):
                     {"message": "Cliente no encontrado."},
                     status=status.HTTP_404_NOT_FOUND
                 )
+            
+            # Obtener los datos del cliente (address y phone)
+            serializer.validated_data['address'] = cliente.address
+            serializer.validated_data['phone'] = cliente.phone
             
             serializer.save()
             return Response(

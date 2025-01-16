@@ -37,6 +37,14 @@ class PedidoSerializer(serializers.ModelSerializer):
         # Recupera el total general calculado
         validated_data['total'] = self.context.get('total_general', 0)
         return super().create(validated_data)
+    
+    def validate_order_code(self, value):
+        """
+        Valida que el order_code no esté duplicado.
+        """
+        if Pedido.objects.filter(order_code=value).exists():
+            raise serializers.ValidationError("El 'order_code' ya está registrado.")
+        return value
 
 class ListaNumerosPedidoSerializer(serializers.ModelSerializer):
     class Meta:

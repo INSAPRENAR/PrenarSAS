@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import Register, loginView, UsersView, LogoutView, ListUserView, UserView, UserDetail, ClientesView, ClienteEspecificoView, PedidoView, PagoView, InventarioView, ProductoView, ProductoEspecificoView, DespachoView, ProductosPedidoDespachoView, ListaNumerosPedidosView, control_produccion_agrupado, InventarioPorProductoView, CalendarioProduccionView, CalendarioEspecificoView, MaterialView, MaterialDetailView, ConsumoMaterialView, CategoriaMaterialDetail, CategoriaMaterialView
+from .views import Register, loginView, UsersView, LogoutView, ListUserView, UserView, UserDetail, ClientesView, ClienteEspecificoView, PedidoView, PagoView, InventarioView, ProductoView, ProductoEspecificoView, DespachoView, ProductosPedidoDespachoView, ListaNumerosPedidosView, control_produccion_agrupado, InventarioPorProductoView, CalendarioProduccionView, CalendarioEspecificoView, MaterialView, MaterialDetailView, ConsumoMaterialView, CategoriaMaterialDetail, CategoriaMaterialView, PedidoDetailView, ProductosPedidoView
 
 urlpatterns = [
     path('register', Register.as_view(), name='register'),
@@ -51,4 +51,7 @@ urlpatterns = [
     path('consumo/material/<int:id>/delete', ConsumoMaterialView.as_view(), name='consumo-material-delete'),
     path('categoria/material/register', CategoriaMaterialView.as_view(), name='categoria-material-register'),
     path('categoria/material/<int:categoria_id>/delete', CategoriaMaterialView.as_view(), name='categoria-material-delete'),
+    path('pedido/<int:pedido_id>', PedidoDetailView.as_view(), name='pedido-detail'),
+    path('pedidos/pedido/productos/<int:pedido_id>', ProductosPedidoView.as_view(), name='pedido-productos-list'),
+    path('despachos/<int:pedido_id>/list', DespachoView.as_view(), name='despachos-list'),
 ]

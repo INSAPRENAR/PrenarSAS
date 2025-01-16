@@ -13,7 +13,7 @@ class ClientesView(APIView):
         else:
             return Response(
                 {"message": "No se encontraron clientes."}, 
-                status=status.HTTP_404_NOT_FOUND
+                status=status.HTTP_200_OK
             )
 
     def post(self, request):
