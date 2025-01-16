@@ -43,10 +43,7 @@ class ProductoView(APIView):
             serializer = ProductoSerializer(productos, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
-            return Response(
-                {"message": "No se encontraron productos."}, 
-                status=status.HTTP_404_NOT_FOUND
-            )
+            return Response([], status=status.HTTP_200_OK)  # Devolver array vacío
         
     def put(self, request, producto_id):
         """

@@ -24,3 +24,5 @@ from .materialEspecificoView import MaterialDetailView
 from .consumoMaterialView import ConsumoMaterialView
 from .categoriaMaterialEspecificoView import CategoriaMaterialDetail
 from .categoriaMaterialView import CategoriaMaterialView
+from .pedidoEspecificoView import PedidoDetailView
+from .pedidoEspecificoProductosView import ProductosPedidoView
