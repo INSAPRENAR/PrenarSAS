@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import Register, loginView, UsersView, LogoutView, ListUserView, UserView, UserDetail, ClientesView, ClienteEspecificoView, PedidoView, PagoView, InventarioView, ProductoView, ProductoEspecificoView, DespachoView, ProductosPedidoDespachoView, ListaNumerosPedidosView, control_produccion_agrupado, InventarioPorProductoView, CalendarioProduccionView, CalendarioEspecificoView, MaterialView, MaterialDetailView, ConsumoMaterialView, CategoriaMaterialDetail, CategoriaMaterialView, PedidoDetailView, ProductosPedidoView
+from .views import Register, loginView, UsersView, LogoutView, ListUserView, UserView, UserDetail, ClientesView, ClienteEspecificoView, PedidoView, PagoView, InventarioView, ProductoView, ProductoEspecificoView, DespachoView, ProductosPedidoDespachoView, ListaNumerosPedidosView, control_produccion_agrupado, InventarioPorProductoView, CalendarioProduccionView, CalendarioEspecificoView, MaterialView, MaterialDetailView, ConsumoMaterialView, CategoriaMaterialDetail, CategoriaMaterialView, PedidoDetailView, ProductosPedidoView, PedidoCountView, ProductosEnPedidosPendientesView, CantidadesTotalesProductosPendientesView, PedidoSaldosPendientesView, PedidoProductosUnidadesSolicitadasView, CalendarioProduccionStateDetalleView, CalendarioDespachoStateDetalleView
 
 urlpatterns = [
     path('register', Register.as_view(), name='register'),
@@ -54,4 +54,11 @@ urlpatterns = [
     path('pedido/<int:pedido_id>', PedidoDetailView.as_view(), name='pedido-detail'),
     path('pedidos/pedido/productos/<int:pedido_id>', ProductosPedidoView.as_view(), name='pedido-productos-list'),
     path('despachos/<int:pedido_id>/list', DespachoView.as_view(), name='despachos-list'),
+    path('pedidos/pendientes/count', PedidoCountView.as_view(), name='pedidos-pendientes-list'),
+    path('pedidos/productos/stock', ProductosEnPedidosPendientesView.as_view(), name='pedidos-pendientes-list'),
+    path('pedidos/productos/cantidades/solicitadas', CantidadesTotalesProductosPendientesView.as_view(), name='pedidos-pendientes-cantidades-solicitadas-list'),
+    path('pedidos/saldos/pendientes/list', PedidoSaldosPendientesView.as_view(), name='pedidos-saldos-pendientes-list'),
+    path('pedidos/productos/pendientes/cantidades/despachadas', PedidoProductosUnidadesSolicitadasView.as_view(), name='pedidos-cantidades-despachadas-pendientes'),
+    path('calendario/produccion/pendientes', CalendarioProduccionStateDetalleView.as_view(), name='calendarios-produccion-pendientes'),
+    path('calendario/despacho/pendientes', CalendarioDespachoStateDetalleView.as_view(), name='calendarios-despacho-pendientes'),
 ]
