@@ -24,7 +24,7 @@ class ProductosEnPedidosPendientesView(APIView):
                 {
                     "id": producto.id,
                     "name": producto.name,
-                    "warehouse_quantity": producto.warehouse_quantity
+                    "cantidad": producto.warehouse_quantity
                 }
                 for producto in productos
             ]
