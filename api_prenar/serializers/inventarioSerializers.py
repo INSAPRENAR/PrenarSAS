@@ -107,3 +107,29 @@ class InventarioSerializer(serializers.ModelSerializer):
 
         # Crear el registro de inventario
         return super().create(validated_data)
+
+class InventarioSerializerInventario(serializers.ModelSerializer):
+    # Campo adicional para mostrar el order_code del pedido
+    order_code = serializers.CharField(source='id_pedido.order_code', read_only=True)
+    name = serializers.CharField(source='id_producto.name', read_only=True)
+    
+    class Meta:
+        model = Inventario
+        # Listamos todos los campos del modelo Inventario y sumamos el campo order_code
+        fields = [
+            'id',
+            'inventory_date',
+            'id_producto',
+            'id_pedido',
+            'number_upload',
+            'conformal_production',
+            'not_comformal_production',
+            'comformal_output',
+            'not_comformal_output',
+            'total_production',
+            'total_output',
+            'email_user',
+            'registration_date',
+            'order_code',
+            'name'
+        ]

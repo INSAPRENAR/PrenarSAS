@@ -2,7 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from api_prenar.models import Inventario
-from api_prenar.serializers.inventarioSerializers import InventarioSerializer
+from api_prenar.serializers.inventarioSerializers import InventarioSerializerInventario
 
 class InventarioPorProductoView(APIView):
 
@@ -18,7 +18,7 @@ class InventarioPorProductoView(APIView):
                 )
 
             # Serializar los inventarios encontrados
-            serializer = InventarioSerializer(inventarios, many=True)
+            serializer = InventarioSerializerInventario(inventarios, many=True)
 
             return Response(
                 {"message": "Inventarios obtenidos exitosamente.", "data": serializer.data},

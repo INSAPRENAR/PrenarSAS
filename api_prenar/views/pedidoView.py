@@ -2,7 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from api_prenar.serializers.pedidoSerializers import PedidoSerializer
-from api_prenar.models import Cliente, Pedido
+from api_prenar.models import Cliente, Pedido, Inventario, Calendario
 
 class PedidoView(APIView):
 
@@ -79,6 +79,7 @@ class PedidoView(APIView):
     
     def delete(self, request, pedido_id):
         try:
+            # Buscar el pedido
             pedido = Pedido.objects.get(id=pedido_id)
         except Pedido.DoesNotExist:
             return Response(
@@ -86,7 +87,20 @@ class PedidoView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        Pedido.delete()
+        # Verificar si existen inventarios asociados a este pedido
+        existe_inventario = Inventario.objects.filter(id_pedido=pedido).exists()
+
+        # Verificar si existen calendarios asociados a este pedido
+        existe_calendario = Calendario.objects.filter(id_pedido=pedido).exists()
+
+        if existe_inventario or existe_calendario:
+            return Response(
+                {"message": "No se puede eliminar el pedido porque tiene registros en inventarios o calendarios asociados."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Si no hay inventarios ni calendarios relacionados, se puede eliminar
+        pedido.delete()
         return Response(
             {"message": "Pedido eliminado exitosamente."},
             status=status.HTTP_204_NO_CONTENT
