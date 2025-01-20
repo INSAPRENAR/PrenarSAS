@@ -9,17 +9,28 @@ class ProductosEnPedidosPendientesView(APIView):
             # Filtrar pedidos con state=1
             pedidos_pendientes = Pedido.objects.filter(state=1)
 
-            # Extraer referencias únicas de los productos en los pedidos pendientes
+            # Extraer referencias únicas de los productos
+            # cuya `cantidad_unidades` sea != `cantidades_despachadas`
             referencias_productos = set()
+
             for pedido in pedidos_pendientes:
                 for producto in pedido.products:
-                    if 'referencia' in producto:
-                        referencias_productos.add(producto['referencia'])
+                    referencia = producto.get('referencia')
+                    
+                    if referencia is None:
+                        continue  # Si no hay 'referencia', ignorar
 
-            # Obtener los productos correspondientes (usando `id` en lugar de `product_code`)
+                    cantidad_unidades = producto.get('cantidad_unidades', 0)
+                    cantidades_despachadas = producto.get('cantidades_despachadas', 0)
+
+                    # Solo si la cantidad solicitada es diferente a la despachada
+                    if cantidad_unidades != cantidades_despachadas:
+                        referencias_productos.add(referencia)
+
+            # Obtener los productos del modelo `Producto` basados en dichas referencias
             productos = Producto.objects.filter(id__in=referencias_productos)
 
-            # Construir la respuesta con la información requerida
+            # Crear la respuesta con la info requerida
             productos_data = [
                 {
                     "id": producto.id,
@@ -31,7 +42,7 @@ class ProductosEnPedidosPendientesView(APIView):
 
             return Response(
                 {
-                    "message": "Productos en pedidos pendientes obtenidos exitosamente.",
+                    "message": "Productos pendientes (cantidad_unidades != cantidades_despachadas) obtenidos exitosamente.",
                     "productos": productos_data
                 },
                 status=status.HTTP_200_OK

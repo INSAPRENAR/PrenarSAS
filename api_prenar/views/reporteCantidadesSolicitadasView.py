@@ -9,34 +9,39 @@ class CantidadesTotalesProductosPendientesView(APIView):
             # Filtrar pedidos pendientes (state=1)
             pedidos_pendientes = Pedido.objects.filter(state=1)
 
-            # Diccionario para acumular las cantidades por referencia
-            cantidades_totales = {}
+            # Diccionario para acumular las cantidades faltantes por referencia
+            cantidades_faltantes = {}
 
             for pedido in pedidos_pendientes:
                 for producto in pedido.products:
                     referencia = producto.get("referencia")
                     cantidad_unidades = producto.get("cantidad_unidades", 0)
+                    cantidades_despachadas = producto.get("cantidades_despachadas", 0)
+                    
+                    # Calcular lo que falta despachar de este producto
+                    diferencia = cantidad_unidades - cantidades_despachadas
 
-                    if referencia is not None:
-                        if referencia not in cantidades_totales:
-                            cantidades_totales[referencia] = 0
-                        cantidades_totales[referencia] += cantidad_unidades
+                    # Solo interesan los productos con faltante (diferencia > 0)
+                    if referencia is not None and diferencia > 0:
+                        if referencia not in cantidades_faltantes:
+                            cantidades_faltantes[referencia] = 0
+                        cantidades_faltantes[referencia] += diferencia
 
-            # Obtener los productos del modelo Producto que correspondan a las referencias
-            productos = Producto.objects.filter(id__in=cantidades_totales.keys())
+            # Obtener los productos del modelo Producto que correspondan a las referencias con faltante
+            productos = Producto.objects.filter(id__in=cantidades_faltantes.keys())
 
-            # Crear la respuesta con nombre y cantidades totales
+            # Crear la respuesta con nombre y la cantidad faltante total
             productos_data = [
                 {
                     "name": producto.name,
-                    "total_quantity_requested": cantidades_totales.get(producto.id, 0)
+                    "total_quantity_requested": cantidades_faltantes.get(producto.id, 0)
                 }
                 for producto in productos
             ]
 
             return Response(
                 {
-                    "message": "Cantidades totales de productos en pedidos pendientes obtenidas exitosamente.",
+                    "message": "Cantidades totales (faltantes) de productos en pedidos pendientes obtenidas exitosamente.",
                     "productos": productos_data
                 },
                 status=status.HTTP_200_OK
