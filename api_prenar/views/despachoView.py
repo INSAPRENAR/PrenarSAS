@@ -102,9 +102,20 @@ class DespachoView(APIView):
                     producto_encontrado['cantidades_despachadas'] = 0
                 producto_encontrado['cantidades_despachadas'] += amount
 
-                # Verificar si la suma de cantidades despachadas alcanza la cantidad disponible
-                if producto_encontrado['cantidades_despachadas'] == cantidad_disponible:
-                    pedido.state = 2  # Cambiar el estado del pedido a '2'
+                # Verificar si TODOS los productos están totalmente despachados
+                all_fully_dispatched = True
+                for prod in pedido.products:  # Recorremos todos los productos del pedido
+                    cantidad_unidades = prod.get('cantidad_unidades', 0)
+                    cantidades_despachadas = prod.get('cantidades_despachadas', 0)
+                    
+                    # Si alguno no cumple que cantidades_despachadas == cantidad_unidades, no se cambia el estado
+                    if cantidades_despachadas < cantidad_unidades:
+                        all_fully_dispatched = False
+                        break
+
+                # Si todos están despachados, cambiar el estado del pedido a '2'
+                if all_fully_dispatched:
+                    pedido.state = 2
 
                 # Guardar los cambios en el campo 'products' del modelo 'Pedido'
                 pedido.products = pedido.products  # Esto marca el campo como modificado
@@ -176,12 +187,16 @@ class DespachoView(APIView):
                     status=status.HTTP_404_NOT_FOUND
                 )
 
-        # Restar el valor de `amount` al campo `cantidades_despachadas`
+            # Restar el valor de `amount` al campo `cantidades_despachadas`
             if 'cantidades_despachadas' in producto_encontrado:
                 producto_encontrado['cantidades_despachadas'] -= despacho.amount
                 if producto_encontrado['cantidades_despachadas'] < 0:
                     producto_encontrado['cantidades_despachadas'] = 0  # Evitar valores negativos
             
+            # Forzar el estado del pedido a 1
+            pedido.state = 1
+
+            # Guardar los cambios en el JSON y el estado
             pedido.products = pedido.products
             pedido.save()
 

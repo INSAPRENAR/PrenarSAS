@@ -1,7 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from api_prenar.models import Cliente
+from api_prenar.models import Cliente, Pedido
 from api_prenar.serializers.clienteSerializers import ClienteSerializer
 
 class ClientesView(APIView):
@@ -62,6 +62,16 @@ class ClientesView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
 
+        # Verificar si hay pedidos relacionados con este cliente
+
+        pedidos_existentes = Pedido.objects.filter(id_client=cliente).exists()
+        if pedidos_existentes:
+            return Response(
+                {"message": "No se puede eliminar el cliente porque tiene pedidos creados."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Si no hay pedidos, se procede a eliminar el cliente
         cliente.delete()
         return Response(
             {"message": "Cliente eliminado exitosamente."},
