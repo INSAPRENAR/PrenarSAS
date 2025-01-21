@@ -13,10 +13,10 @@ class loginView(APIView):
         user = User.objects.filter(email=email).first()
 
         if user is None:
-            raise AuthenticationFailed('User not found!')
+            raise AuthenticationFailed('Usuario No existe!')
         
         if not user.check_password(password):
-            raise AuthenticationFailed('Incorrect password!')
+            raise AuthenticationFailed('Contraseña Incorrecta!')
         
         # Generar el RefreshToken y AccessToken con SimpleJWT
         refresh = RefreshToken.for_user(user)

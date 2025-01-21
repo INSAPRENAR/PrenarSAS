@@ -7,6 +7,6 @@ class Cliente(models.Model):
     address=models.CharField(null=True, blank=True)
     email=models.EmailField(unique=True)
     identification=models.CharField(unique=True)
-    identification_asesor=models.CharField()
+    identification_asesor=models.CharField(null=True, blank=True)
     email_user=models.EmailField()
     registration_date=models.DateField(auto_now_add=True)

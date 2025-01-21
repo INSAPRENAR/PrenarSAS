@@ -4,6 +4,7 @@ from api_prenar.options.option import OPTIONS_DISPATCH_STATE
 
 class Despacho(models.Model):
     id=models.AutoField(primary_key=True)
+    cargo_number=models.CharField(unique=True)
     id_pedido=models.ForeignKey(Pedido, on_delete=models.CASCADE, related_name='despachos')
     id_producto=models.ForeignKey(Producto, on_delete=models.CASCADE, related_name='despachos')
     dispatch_date=models.DateField()
