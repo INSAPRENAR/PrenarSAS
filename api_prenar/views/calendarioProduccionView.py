@@ -30,10 +30,10 @@ class CalendarioProduccionView(APIView):
         try:
             # Filtrar los calendarios según el tipo
             if tipo == 1:
-                calendarios = Calendario.objects.filter(type=1)
+                calendarios = Calendario.objects.filter(type=1).order_by('-id')
                 serializer = CalendarioTipo1Serializer(calendarios, many=True)
             elif tipo == 2:
-                calendarios = Calendario.objects.filter(type=2)
+                calendarios = Calendario.objects.filter(type=2).order_by('-id')
                 serializer = CalendarioTipo2Serializer(calendarios, many=True)
             else:
                 return Response(

@@ -9,7 +9,7 @@ class InventarioPorProductoView(APIView):
     def get(self, request, id_producto):
         try:
             # Filtrar los inventarios por el id_producto proporcionado
-            inventarios = Inventario.objects.filter(id_producto=id_producto)
+            inventarios = Inventario.objects.filter(id_producto=id_producto).order_by('-id')
 
             if not inventarios.exists():
                 return Response(

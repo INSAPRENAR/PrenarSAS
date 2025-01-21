@@ -6,7 +6,7 @@ from api_prenar.serializers.clienteSerializers import ClienteSerializer
 
 class ClientesView(APIView):
     def get(self, request):
-        clientes = Cliente.objects.all()
+        clientes = Cliente.objects.all().order_by('-id')
         if clientes.exists():
             serializer = ClienteSerializer(clientes, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)

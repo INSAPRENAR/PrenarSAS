@@ -9,7 +9,7 @@ class MaterialDetailView(APIView):
     def get(self, request, categoria_id):
         try:
             # Filtrar los materiales según la categoría
-            materiales = Material.objects.filter(id_categoria=categoria_id)
+            materiales = Material.objects.filter(id_categoria=categoria_id).order_by('-id')
 
             if not materiales.exists():
                 # Si no hay materiales, devolver un mensaje indicando que no se encontraron datos

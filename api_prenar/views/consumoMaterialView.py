@@ -47,7 +47,7 @@ class ConsumoMaterialView(APIView):
     def get(self, request, categoria_id):
         try:
             # Filtrar los materiales según la categoría
-            materiales = ConsumoMaterial.objects.filter(id_categoria=categoria_id)
+            materiales = ConsumoMaterial.objects.filter(id_categoria=categoria_id).order_by('-id')
 
             if not materiales.exists():
                 # Si no hay materiales, devolver un mensaje indicando que no se encontraron datos

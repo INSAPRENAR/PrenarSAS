@@ -2,7 +2,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from api_prenar.serializers.pedidoSerializers import PedidoSerializer
-from api_prenar.models import Cliente, Pedido, Inventario, Calendario
+from api_prenar.models import Cliente, Pedido, Inventario, Calendario, Despacho
+from django.db import transaction
 
 class PedidoView(APIView):
 
@@ -16,7 +17,7 @@ class PedidoView(APIView):
             )
 
         # filter para obtener todos los pedidos
-        pedidos = Pedido.objects.filter(id_client=cliente)
+        pedidos = Pedido.objects.filter(id_client=cliente).order_by('-id')
         if pedidos.exists():
             serializer = PedidoSerializer(pedidos, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
@@ -79,29 +80,59 @@ class PedidoView(APIView):
     
     def delete(self, request, pedido_id):
         try:
-            # Buscar el pedido
-            pedido = Pedido.objects.get(id=pedido_id)
+            with transaction.atomic():
+                # Buscar el pedido por su ID, utilizando select_related si es necesario
+                pedido = Pedido.objects.select_related().get(id=pedido_id)
+                
+                # Verificar el estado del pedido
+                if pedido.state == 2:
+                    return Response(
+                        {"message": "No se puede eliminar el pedido porque el estado del pedido es Completado."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                
+                # Verificar si existen despachos asociados a este pedido
+                existe_despacho = Despacho.objects.filter(id_pedido=pedido).exists()
+                
+                # Verificar si existen inventarios asociados a este pedido
+                existe_inventario = Inventario.objects.filter(id_pedido=pedido).exists()
+                
+                # Verificar si existen calendarios asociados a este pedido
+                existe_calendario = Calendario.objects.filter(id_pedido=pedido).exists()
+                
+                # Si existen despachos, inventarios o calendarios asociados, no permitir la eliminación
+                if existe_despacho or existe_inventario or existe_calendario:
+                    mensajes = []
+                    if existe_despacho:
+                        mensajes.append("tiene despachos asociados.")
+                    if existe_inventario:
+                        mensajes.append("tiene registros en inventarios asociados.")
+                    if existe_calendario:
+                        mensajes.append("tiene registros en calendarios asociados.")
+                    
+                    # Construir el mensaje de error concatenando las razones
+                    mensaje_error = "No se puede eliminar el pedido porque " + " y ".join(mensajes)
+                    
+                    return Response(
+                        {"message": mensaje_error},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                
+                # Si no hay despachos, inventarios ni calendarios asociados, proceder a eliminar el pedido
+                pedido.delete()
+                
+                return Response(
+                    {"message": "Pedido eliminado exitosamente."},
+                    status=status.HTTP_204_NO_CONTENT
+                )
+        
         except Pedido.DoesNotExist:
             return Response(
-                {"message": "Pedido no encontrado."},
+                {"message": f"Pedido con ID {pedido_id} no encontrado."},
                 status=status.HTTP_404_NOT_FOUND
             )
-
-        # Verificar si existen inventarios asociados a este pedido
-        existe_inventario = Inventario.objects.filter(id_pedido=pedido).exists()
-
-        # Verificar si existen calendarios asociados a este pedido
-        existe_calendario = Calendario.objects.filter(id_pedido=pedido).exists()
-
-        if existe_inventario or existe_calendario:
+        except Exception as e:
             return Response(
-                {"message": "No se puede eliminar el pedido porque tiene registros en inventarios o calendarios asociados."},
+                {"message": "Error al intentar eliminar el pedido.", "error": str(e)},
                 status=status.HTTP_400_BAD_REQUEST
             )
-
-        # Si no hay inventarios ni calendarios relacionados, se puede eliminar
-        pedido.delete()
-        return Response(
-            {"message": "Pedido eliminado exitosamente."},
-            status=status.HTTP_204_NO_CONTENT
-        )
