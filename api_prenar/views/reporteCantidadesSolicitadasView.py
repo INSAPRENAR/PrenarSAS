@@ -34,6 +34,8 @@ class CantidadesTotalesProductosPendientesView(APIView):
             productos_data = [
                 {
                     "name": producto.name,
+                    "codigo": producto.product_code,
+                    "color": producto.color,
                     "total_quantity_requested": cantidades_faltantes.get(producto.id, 0)
                 }
                 for producto in productos

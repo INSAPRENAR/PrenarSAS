@@ -35,7 +35,9 @@ class ProductosEnPedidosPendientesView(APIView):
                 {
                     "id": producto.id,
                     "name": producto.name,
-                    "cantidad": producto.warehouse_quantity
+                    "cantidad": producto.warehouse_quantity,
+                    "codigo": producto.product_code,
+                    "color": producto.color
                 }
                 for producto in productos
             ]
