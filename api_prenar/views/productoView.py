@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from api_prenar.models import Producto
 from api_prenar.serializers.productoSerializers import ProductoSerializer
+from rest_framework.pagination import PageNumberPagination
 
 class ProductoView(APIView):
     def post(self, request):
@@ -38,12 +39,29 @@ class ProductoView(APIView):
     
 
     def get(self, request):
-        productos = Producto.objects.all()
-        if productos.exists():
-            serializer = ProductoSerializer(productos, many=True)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        else:
-            return Response([], status=status.HTTP_200_OK)  # Devolver array vacío
+        try:
+            # Obtener todos los productos ordenados por '-id' (opcional)
+            productos = Producto.objects.all().order_by('-id')
+
+            if not productos.exists():
+                return Response([], status=status.HTTP_200_OK)  # Devolver array vacío si no hay productos
+
+            # Inicializar el paginador
+            paginator = PageNumberPagination()
+            paginator.page_size = 20  # Define el número de productos por página (ajusta según tus necesidades)
+            paginated_productos = paginator.paginate_queryset(productos, request)
+
+            # Serializar los productos paginados
+            serializer = ProductoSerializer(paginated_productos, many=True)
+
+            # Retornar la respuesta paginada
+            return paginator.get_paginated_response(serializer.data)
+
+        except Exception as e:
+            return Response(
+                {"message": "Error al obtener los productos.", "error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
         
     def put(self, request, producto_id):
         """

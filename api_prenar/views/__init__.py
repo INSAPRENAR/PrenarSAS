@@ -33,3 +33,4 @@ from .reporteSaldosPedidosPendientesView import PedidoSaldosPendientesView
 from .reporteUnidadesSolicitadasPorPedidoView import PedidoProductosUnidadesSolicitadasView
 from .reporteCalendarioProduccionView import CalendarioProduccionStateDetalleView
 from .reporteCalendarioDespachoView import CalendarioDespachoStateDetalleView
+from .listaProductosView import ListaProductoView

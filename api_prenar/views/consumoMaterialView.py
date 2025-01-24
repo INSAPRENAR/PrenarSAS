@@ -5,6 +5,7 @@ from api_prenar.serializers.consumoMaterialSerializers import ConsumoMaterialSer
 from api_prenar.models.categoria_material import CategoriaMaterial
 from api_prenar.models import ConsumoMaterial
 from django.shortcuts import get_object_or_404
+from rest_framework.pagination import PageNumberPagination
 
 class ConsumoMaterialView(APIView):
     def post(self, request):
@@ -46,27 +47,36 @@ class ConsumoMaterialView(APIView):
             )
     def get(self, request, categoria_id):
         try:
-            # Filtrar los materiales según la categoría
-            materiales = ConsumoMaterial.objects.filter(id_categoria=categoria_id).order_by('-id')
+            # Filtrar los consumos de materiales según la categoría proporcionada, ordenados por '-id'
+            consumos = ConsumoMaterial.objects.filter(id_categoria=categoria_id).order_by('-id')
 
-            if not materiales.exists():
-                # Si no hay materiales, devolver un mensaje indicando que no se encontraron datos
+            # Inicializar el paginador
+            paginator = PageNumberPagination()
+            paginator.page_size = 20  # Define el número de consumos por página (ajusta según tus necesidades)
+            paginated_consumos = paginator.paginate_queryset(consumos, request)
+
+            if not consumos.exists():
+                # Si no hay consumos, devolver un mensaje indicando que no se encontraron datos
                 return Response(
-                    {"message": "No se encontraron consumos de materiales para la categoría especificada.", "data": []},
+                    {
+                        "message": "No se encontraron consumos de materiales para la categoría especificada.",
+                        "data": []
+                    },
                     status=status.HTTP_200_OK
                 )
 
-            # Serializar los materiales encontrados
-            serializer = ConsumoMaterialSerializer(materiales, many=True)
+            # Serializar los consumos paginados
+            serializer = ConsumoMaterialSerializer(paginated_consumos, many=True)
 
-            return Response(
-                {"message": "Consumo Materiales obtenidos exitosamente.", "data": serializer.data},
-                status=status.HTTP_200_OK
-            )
+            # Retornar la respuesta paginada con el mensaje
+            return paginator.get_paginated_response(serializer.data)
 
         except Exception as e:
             return Response(
-                {"message": "Ocurrió un error al obtener los consumos de materiales.", "error": str(e)},
+                {
+                    "message": "Ocurrió un error al obtener los consumos de materiales.",
+                    "error": str(e)
+                },
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
     

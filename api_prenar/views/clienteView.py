@@ -3,18 +3,22 @@ from rest_framework.response import Response
 from rest_framework import status
 from api_prenar.models import Cliente, Pedido
 from api_prenar.serializers.clienteSerializers import ClienteSerializer
+from rest_framework.pagination import PageNumberPagination
 
 class ClientesView(APIView):
     def get(self, request):
         clientes = Cliente.objects.all().order_by('-id')
-        if clientes.exists():
-            serializer = ClienteSerializer(clientes, many=True)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        else:
-            return Response(
-                {"message": "No se encontraron clientes."}, 
-                status=status.HTTP_200_OK
-            )
+
+        # Configurar el paginador
+        paginator = PageNumberPagination()
+        paginator.page_size = 20  # Número de clientes por página
+        paginated_clientes = paginator.paginate_queryset(clientes, request)
+
+        # Serializar los datos paginados
+        serializer = ClienteSerializer(paginated_clientes, many=True)
+
+        # Retornar la respuesta con los datos paginados
+        return paginator.get_paginated_response(serializer.data)
 
     def post(self, request):
         serializer = ClienteSerializer(data=request.data)
