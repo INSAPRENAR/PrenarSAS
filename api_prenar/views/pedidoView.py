@@ -4,6 +4,7 @@ from rest_framework import status
 from api_prenar.serializers.pedidoSerializers import PedidoSerializer
 from api_prenar.models import Cliente, Pedido, Inventario, Calendario, Despacho
 from django.db import transaction
+from rest_framework.pagination import PageNumberPagination
 
 class PedidoView(APIView):
 
@@ -16,16 +17,25 @@ class PedidoView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        # filter para obtener todos los pedidos
+        # Filtrar los pedidos asociados al cliente, ordenados por '-id'
         pedidos = Pedido.objects.filter(id_client=cliente).order_by('-id')
-        if pedidos.exists():
-            serializer = PedidoSerializer(pedidos, many=True)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        else:
+
+        if not pedidos.exists():
             return Response(
                 {"message": "El cliente no tiene pedidos registrados."},
                 status=status.HTTP_200_OK
             )
+
+        # Inicializar el paginador
+        paginator = PageNumberPagination()
+        paginator.page_size = 20  # Define el número de pedidos por página
+        paginated_pedidos = paginator.paginate_queryset(pedidos, request)
+
+        # Serializar los pedidos paginados
+        serializer = PedidoSerializer(paginated_pedidos, many=True)
+
+        # Retornar la respuesta paginada
+        return paginator.get_paginated_response(serializer.data)
 
     def post(self, request):
         serializer = PedidoSerializer(data=request.data)
