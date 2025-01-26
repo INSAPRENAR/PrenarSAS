@@ -16,16 +16,19 @@ class CantidadesTotalesProductosPendientesView(APIView):
                 for producto in pedido.products:
                     referencia = producto.get("referencia")
                     cantidad_unidades = producto.get("cantidad_unidades", 0)
+                    control = producto.get("control", 0)  # Obtener el valor de 'control', por defecto 0
                     cantidades_despachadas = producto.get("cantidades_despachadas", 0)
                     
-                    # Calcular lo que falta despachar de este producto
-                    diferencia = cantidad_unidades - cantidades_despachadas
+                    # Solo considerar productos con 'control' > 0
+                    if referencia is not None and control > 0:
+                        # Calcular lo que falta despachar de este producto
+                        diferencia = cantidad_unidades - cantidades_despachadas
 
-                    # Solo interesan los productos con faltante (diferencia > 0)
-                    if referencia is not None and diferencia > 0:
-                        if referencia not in cantidades_faltantes:
-                            cantidades_faltantes[referencia] = 0
-                        cantidades_faltantes[referencia] += diferencia
+                        # Solo interesan los productos con faltante (diferencia > 0)
+                        if diferencia > 0:
+                            if referencia not in cantidades_faltantes:
+                                cantidades_faltantes[referencia] = 0
+                            cantidades_faltantes[referencia] += diferencia
 
             # Obtener los productos del modelo Producto que correspondan a las referencias con faltante
             productos = Producto.objects.filter(id__in=cantidades_faltantes.keys())

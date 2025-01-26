@@ -2,7 +2,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from api_prenar.serializers.inventarioSerializers import InventarioSerializer
-from api_prenar.models import Inventario
+from api_prenar.models import Inventario, Despacho
+from django.db import transaction
 
 class InventarioView(APIView):
 
@@ -66,7 +67,7 @@ class InventarioView(APIView):
             # Buscar el registro de inventario
             inventario = Inventario.objects.get(id=inventario_id)
 
-            # Verificar si hay un producto relacionado
+            # Verificar si hay un producto y pedido relacionados
             producto = inventario.id_producto
             pedido = inventario.id_pedido
 
@@ -76,36 +77,47 @@ class InventarioView(APIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-            # Ajustar warehouse_quantity dependiendo de producción o salida
-            if inventario.total_production > 0:
-                producto.warehouse_quantity -= inventario.total_production
+            with transaction.atomic():
+                # Ajustar warehouse_quantity dependiendo de producción o salida
+                if inventario.total_production > 0:
+                    producto.warehouse_quantity -= inventario.total_production
 
-                # Ajustar el campo control del producto en el pedido
-                products = pedido.products  # JSON de productos
-                for prod in products:
-                    if prod.get('referencia') == producto.id:  # Comparar por el campo de referencia
-                        prod['control'] += inventario.total_production
-                        break  # Detener la búsqueda una vez encontrado el producto
+                    # Ajustar el campo control del producto en el pedido
+                    products = pedido.products  # JSON de productos
+                    for prod in products:
+                        if prod.get('referencia') == producto.id:  # Comparar por el campo de referencia
+                            prod['control'] += inventario.total_production
+                            break  # Detener la búsqueda una vez encontrado el producto
 
-                # Guardar los cambios en el pedido
-                pedido.products = products
-                pedido.save()
+                    # Guardar los cambios en el pedido
+                    pedido.products = products
+                    pedido.save()
 
-            elif inventario.total_output > 0:
-                producto.warehouse_quantity += inventario.total_output
+                elif inventario.total_output > 0:
+                    # **Nueva Lógica: Verificar Despachos Asociados**
+                    despachos_asociados = Despacho.objects.filter(
+                        id_pedido=pedido,
+                        id_producto=producto
+                    ).exists()
 
-            # Validar que warehouse_quantity no sea negativa
-            if producto.warehouse_quantity < 0:
-                return Response(
-                    {"message": f"La cantidad en almacén del producto {producto.name} no puede ser negativa."},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
+                    if despachos_asociados:
+                        return Response(
+                            {"message": "Existe despacho asociado a esta salida. No se puede eliminar el registro de inventario."},
+                            status=status.HTTP_400_BAD_REQUEST
+                        )
 
-            # Guardar los cambios en el producto
-            producto.save()
+                # Validar que warehouse_quantity no sea negativa
+                if producto.warehouse_quantity < 0:
+                    return Response(
+                        {"message": f"La cantidad en almacén del producto {producto.name} no puede ser negativa."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
 
-            # Eliminar el registro de inventario
-            inventario.delete()
+                # Guardar los cambios en el producto
+                producto.save()
+
+                # Eliminar el registro de inventario
+                inventario.delete()
 
             return Response(
                 {"message": "Registro de inventario eliminado exitosamente."},
