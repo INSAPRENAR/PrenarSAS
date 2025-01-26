@@ -1,7 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from api_prenar.models import Producto
+from api_prenar.models import Producto, Pedido, Calendario, Inventario
 from api_prenar.serializers.productoSerializers import ProductoSerializer
 from rest_framework.pagination import PageNumberPagination
 
@@ -99,13 +99,39 @@ class ProductoView(APIView):
             producto = Producto.objects.get(id=producto_id)
         except Producto.DoesNotExist:
             return Response(
-                {"message": f"No se encontró el producto con ID {id}."},
+                {"message": f"No se encontró el producto con ID {producto_id}."},
                 status=status.HTTP_404_NOT_FOUND
             )
-
-        # Eliminar el producto
+        
+        # Verificar asociaciones en Pedido
+        # Asumiendo que 'products' es un JSONField que contiene una lista de diccionarios con 'referencia'
+        pedidos_asociados = Pedido.objects.filter(products__contains=[{'referencia': producto_id}]).exists()
+        
+        # Verificar asociaciones en Inventario
+        inventario_asociado = Inventario.objects.filter(id_producto=producto).exists()
+        
+        # Verificar asociaciones en Calendario
+        calendario_asociado = Calendario.objects.filter(id_producto=producto).exists()
+        
+        # Si hay alguna asociación, no permitir la eliminación
+        if pedidos_asociados or inventario_asociado or calendario_asociado:
+            mensajes = []
+            if pedidos_asociados:
+                mensajes.append("Este producto está asociado con uno o más pedidos.")
+            if inventario_asociado:
+                mensajes.append("Este producto está asociado con el inventario.")
+            if calendario_asociado:
+                mensajes.append("Este producto está asociado con el calendario.")
+            
+            mensaje_completo = " ".join(mensajes)
+            return Response(
+                {"message": f"No se puede eliminar el producto porque tiene asociaciones con otros módulos. {mensaje_completo}"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Si no hay asociaciones, proceder a eliminar
         producto.delete()
         return Response(
-            {"message": f"Producto con ID {id} eliminado exitosamente."},
+            {"message": f"Producto con ID {producto_id} eliminado exitosamente."},
             status=status.HTTP_200_OK
         )
