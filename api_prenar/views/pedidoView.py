@@ -2,7 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from api_prenar.serializers.pedidoSerializers import PedidoSerializer
-from api_prenar.models import Cliente, Pedido, Inventario, Calendario, Despacho
+from api_prenar.models import Cliente, Pedido, Inventario, Calendario, Despacho, Pago
 from django.db import transaction
 from rest_framework.pagination import PageNumberPagination
 
@@ -109,9 +109,12 @@ class PedidoView(APIView):
                 
                 # Verificar si existen calendarios asociados a este pedido
                 existe_calendario = Calendario.objects.filter(id_pedido=pedido).exists()
+
+                # Verificar si existen pagos asociados a este pedido
+                existe_pagos = Pago.objects.filter(id_pedido=pedido).exists()
                 
                 # Si existen despachos, inventarios o calendarios asociados, no permitir la eliminación
-                if existe_despacho or existe_inventario or existe_calendario:
+                if existe_despacho or existe_inventario or existe_calendario or existe_pagos:
                     mensajes = []
                     if existe_despacho:
                         mensajes.append("tiene despachos asociados.")
@@ -119,6 +122,8 @@ class PedidoView(APIView):
                         mensajes.append("tiene registros en inventarios asociados.")
                     if existe_calendario:
                         mensajes.append("tiene registros en calendarios asociados.")
+                    if existe_pagos:
+                        mensajes.append("tiene registros en pagos asociados.")
                     
                     # Construir el mensaje de error concatenando las razones
                     mensaje_error = "No se puede eliminar el pedido porque " + " y ".join(mensajes)
