@@ -153,3 +153,6 @@ SIMPLE_JWT = {
     'BLACKLIST_AFTER_ROTATION': True,               # Opcional: Blacklist los tokens rotados
     'UPDATE_LAST_LOGIN': False,                     # Opcional: Actualiza el campo `last_login` al refrescar token
 }
+
+# Contraseña para eliminar inventarios
+INVENTORY_DELETE_PASSWORD = 'INSAprenar'
