@@ -4,6 +4,7 @@ from rest_framework import status
 from api_prenar.serializers.inventarioSerializers import InventarioSerializer
 from api_prenar.models import Inventario, Despacho
 from django.db import transaction
+from django.conf import settings
 
 class InventarioView(APIView):
 
@@ -63,6 +64,22 @@ class InventarioView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        # Obtener la contraseña del cuerpo de la solicitud
+        password = request.data.get('password')
+        if not password:
+            return Response(
+                {"message": "La contraseña es requerida para eliminar el inventario."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Verificar la contraseña proporcionada
+        expected_password = settings.INVENTORY_DELETE_PASSWORD
+        if password != expected_password:
+            return Response(
+                {"message": "Contraseña incorrecta."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
         try:
             # Buscar el registro de inventario
             inventario = Inventario.objects.get(id=inventario_id)
@@ -94,7 +111,7 @@ class InventarioView(APIView):
                     pedido.save()
 
                 elif inventario.total_output > 0:
-                    # **Nueva Lógica: Verificar Despachos Asociados**
+                    producto.warehouse_quantity += inventario.total_output
                     despachos_asociados = Despacho.objects.filter(
                         id_pedido=pedido,
                         id_producto=producto

@@ -170,8 +170,6 @@ class DespachoView(APIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-            # Sumar el valor de `amount` al campo `warehouse_quantity` del producto
-            producto.warehouse_quantity += despacho.amount
             producto.save()
 
             # Buscar el producto en el JSON de `products` del pedido
