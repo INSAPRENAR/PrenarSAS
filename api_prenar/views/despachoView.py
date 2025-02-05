@@ -93,8 +93,6 @@ class DespachoView(APIView):
                         status=status.HTTP_400_BAD_REQUEST
                     )
 
-                # Restar el valor de `amount` al campo `warehouse_quantity` del producto
-                producto_model.warehouse_quantity -= amount
                 producto_model.save()
 
                 # Actualizar el campo 'cantidades_despachadas' en el JSON del producto correspondiente en el pedido

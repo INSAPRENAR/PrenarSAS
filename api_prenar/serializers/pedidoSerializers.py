@@ -50,3 +50,8 @@ class ListaNumerosPedidoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Pedido
         fields = ['id', 'order_code']
+
+class PedidoSerializerControlProduccion(serializers.ModelSerializer):
+    class Meta:
+        model = Pedido
+        fields = '__all__'

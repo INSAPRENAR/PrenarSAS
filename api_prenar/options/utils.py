@@ -2,7 +2,7 @@ def get_total_almacen(referencia):
     """
     Obtiene el total disponible en el almacén para un producto específico según su referencia.
     """
-    from api_prenar.models import Producto  # Importa tu modelo de productos (ajusta según tu estructura)
+    from api_prenar.models import Producto
 
     try:
         # Busca el producto en la base de datos por referencia

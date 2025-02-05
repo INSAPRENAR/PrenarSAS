@@ -2,8 +2,8 @@ from django.http import JsonResponse
 from api_prenar.models import Pedido
 from api_prenar.options.utils import get_total_almacen
 
-def control_produccion_agrupado(request):
-    pedidos = Pedido.objects.filter(state=1)
+def control_produccion_agrupado_completados(request):
+    pedidos = Pedido.objects.all()
     productos_agrupados = {}
 
     for pedido in pedidos:
@@ -15,14 +15,16 @@ def control_produccion_agrupado(request):
             referencia = producto["referencia"]
             name_producto = producto["name"]
             color_producto = producto["color"]
-            control = producto.get("control", False)
+            control_producto = producto["control"]
+            control = producto.get("control", True)
             cantidad_pendiente = producto["cantidad_unidades"]
 
-            if control == False:
+            if control == True:
                 if referencia not in productos_agrupados:
                     productos_agrupados[referencia] = {
                         "id_producto": f"{referencia}",
                         "nombre_producto": f"{name_producto} {color_producto}",
+                        "control":control_producto,
                         "total_a_deber": 0,
                         "total_almacen": 0,
                         "cantidadAlmacen_menosCantidadAdeber": 0,
@@ -45,6 +47,6 @@ def control_produccion_agrupado(request):
         datos["cantidadAlmacen_menosCantidadAdeber"] =  total_almacen - datos["total_a_deber"]
 
     return JsonResponse({
-        "message": "Control de producción generado exitosamente.",
+        "message": "Control de producción completados generado exitosamente.",
         "productos": list(productos_agrupados.values())
     })

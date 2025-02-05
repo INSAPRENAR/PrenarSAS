@@ -7,6 +7,8 @@ from rest_framework.validators import UniqueValidator
 class InventarioSerializer(serializers.ModelSerializer):
     cargo_number = serializers.CharField(
         max_length=255,
+        required=False,  # No es obligatorio
+        allow_blank=True,  # Permite que el campo esté vacío
         validators=[
             UniqueValidator(
                 queryset=Inventario.objects.all(),
@@ -108,7 +110,9 @@ class InventarioSerializer(serializers.ModelSerializer):
                 producto.save()
 
                 # Calcular saldo_almacen
+                # Ahora 'saldo_almacen' se asigna en función de la cantidad actual de producto.warehouse_quantity
                 saldo_almacen = producto.warehouse_quantity
+
                 validated_data['saldo_almacen'] = saldo_almacen
 
             # Crear el registro de inventario
