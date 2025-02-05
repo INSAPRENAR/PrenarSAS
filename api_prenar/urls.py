@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import Register, loginView, UsersView, LogoutView, ListUserView, UserView, UserDetail, ClientesView, ClienteEspecificoView, PedidoView, PagoView, InventarioView, ProductoView, ProductoEspecificoView, DespachoView, ProductosPedidoDespachoView, ListaNumerosPedidosView, control_produccion_agrupado, InventarioPorProductoView, CalendarioProduccionView, CalendarioEspecificoView, MaterialView, MaterialDetailView, ConsumoMaterialView, CategoriaMaterialDetail, CategoriaMaterialView, PedidoDetailView, ProductosPedidoView, PedidoCountView, ProductosEnPedidosPendientesView, CantidadesTotalesProductosPendientesView, PedidoSaldosPendientesView, PedidoProductosUnidadesSolicitadasView, CalendarioProduccionStateDetalleView, CalendarioDespachoStateDetalleView, ListaProductoView
+from .views import Register, loginView, UsersView, LogoutView, ListUserView, UserView, UserDetail, ClientesView, ClienteEspecificoView, PedidoView, PagoView, InventarioView, ProductoView, ProductoEspecificoView, DespachoView, ProductosPedidoDespachoView, ListaNumerosPedidosView, control_produccion_agrupado, InventarioPorProductoView, CalendarioProduccionView, CalendarioEspecificoView, MaterialView, MaterialDetailView, ConsumoMaterialView, CategoriaMaterialDetail, CategoriaMaterialView, PedidoDetailView, ProductosPedidoView, PedidoCountView, ProductosEnPedidosPendientesView, CantidadesTotalesProductosPendientesView, PedidoSaldosPendientesView, PedidoProductosUnidadesSolicitadasView, CalendarioProduccionStateDetalleView, CalendarioDespachoStateDetalleView, ListaProductoView, UpdatePedidoProductControl, control_produccion_agrupado_completados, UpdatePedidoProductControlCompletados
 
 urlpatterns = [
     path('register', Register.as_view(), name='register'),
@@ -62,4 +62,7 @@ urlpatterns = [
     path('pedidos/productos/pendientes/cantidades/despachadas', PedidoProductosUnidadesSolicitadasView.as_view(), name='pedidos-cantidades-despachadas-pendientes'),
     path('calendario/produccion/pendientes', CalendarioProduccionStateDetalleView.as_view(), name='calendarios-produccion-pendientes'),
     path('calendario/despacho/pendientes', CalendarioDespachoStateDetalleView.as_view(), name='calendarios-despacho-pendientes'),
+    path('control/produccion/<str:pedido_id>/update', UpdatePedidoProductControl.as_view(), name='control-produccion-update'),
+    path('control/produccion/completados', control_produccion_agrupado_completados, name='control-produccion-completados'),
+    path('control/produccion/completados/<str:pedido_id>/update', UpdatePedidoProductControlCompletados.as_view(), name='control-produccion-completados-update'),
 ]
