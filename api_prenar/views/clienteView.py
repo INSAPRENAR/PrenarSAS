@@ -4,10 +4,14 @@ from rest_framework import status
 from api_prenar.models import Cliente, Pedido
 from api_prenar.serializers.clienteSerializers import ClienteSerializer
 from rest_framework.pagination import PageNumberPagination
+from django.db.models import Count, Q
 
 class ClientesView(APIView):
     def get(self, request):
-        clientes = Cliente.objects.all().order_by('-id')
+        # incluimos el número de pedidos pendientes (state=1) por cada cliente
+        clientes = Cliente.objects.annotate(
+            pedidos_pendientes=Count('pedidos', filter=Q(pedidos__state=1))
+        ).order_by('-id')
 
         # Configurar el paginador
         paginator = PageNumberPagination()
