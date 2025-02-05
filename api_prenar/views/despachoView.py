@@ -81,20 +81,6 @@ class DespachoView(APIView):
                         status=status.HTTP_400_BAD_REQUEST
                     )
 
-                # Obtener el producto relacionado
-                producto_model = Producto.objects.get(id=id_producto)
-
-                # Validar que haya suficiente cantidad en almacén
-                if producto_model.warehouse_quantity < amount:
-                    return Response(
-                        {
-                            "message": f"La cantidad en almacén ({producto_model.warehouse_quantity}) no es suficiente para el despacho solicitado ({amount})."
-                        },
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
-
-                producto_model.save()
-
                 # Actualizar el campo 'cantidades_despachadas' en el JSON del producto correspondiente en el pedido
                 if 'cantidades_despachadas' not in producto_encontrado:
                     producto_encontrado['cantidades_despachadas'] = 0
