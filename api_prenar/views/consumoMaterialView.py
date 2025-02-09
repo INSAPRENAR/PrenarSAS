@@ -3,11 +3,12 @@ from rest_framework import status
 from rest_framework.response import Response
 from api_prenar.serializers.consumoMaterialSerializers import ConsumoMaterialSerializer
 from api_prenar.models.categoria_material import CategoriaMaterial
-from api_prenar.models import ConsumoMaterial
+from api_prenar.models import ConsumoMaterial, Producto
 from django.shortcuts import get_object_or_404
 from rest_framework.pagination import PageNumberPagination
 
 class ConsumoMaterialView(APIView):
+    
     def post(self, request):
         try:
             serializer=ConsumoMaterialSerializer(data=request.data)
@@ -15,20 +16,41 @@ class ConsumoMaterialView(APIView):
                 id_categoria=serializer.validated_data.get('id_categoria')
                 data_base_quantity_used=serializer.validated_data.get('base_quantity_used')
                 data_quantity_mortar_used=serializer.validated_data.get('quantity_mortar_used')
+                quantity_produced=serializer.validated_data.get('quantity_produced')
+                id_producto=serializer.validated_data.get('id_producto')
 
                 categoria_material=get_object_or_404(CategoriaMaterial, id=id_categoria.id)
+                producto = get_object_or_404(Producto, id=id_producto.id)
+
+
+                # Cálculos adicionales para los campos
+                unit_X_base_package = quantity_produced / data_base_quantity_used if data_base_quantity_used != 0 else 0
+                base_variation = unit_X_base_package - producto.base_estimated_units
+                kilos_X_base_unit = data_base_quantity_used / quantity_produced if quantity_produced != 0 else 0
+
+                unit_X_package_mortar = quantity_produced / data_quantity_mortar_used if data_quantity_mortar_used != 0 else 0
+                mortar_variation = unit_X_package_mortar - producto.estimated_units_mortar
+                kilos_X_unit_mortar = data_quantity_mortar_used / quantity_produced if quantity_produced != 0 else 0
 
                 total = data_base_quantity_used + data_quantity_mortar_used
 
                 nuevo_consumo_material=ConsumoMaterial.objects.create(
                     consumption_date=serializer.validated_data.get('consumption_date'),
                     id_categoria=categoria_material,
-                    id_producto=serializer.validated_data.get('id_producto'),
+                    id_producto=producto,
                     quantity_produced=serializer.validated_data.get('quantity_produced'),
                     base_quantity_used=data_base_quantity_used,
                     quantity_mortar_used=data_quantity_mortar_used,
                     total=total,
-                    email_user=serializer.validated_data.get('email_user')
+                    email_user=serializer.validated_data.get('email_user'),
+                    unit_X_base_package=unit_X_base_package,
+                    estimated_base_reference_units=producto.base_estimated_units,
+                    base_variation=base_variation,
+                    kilos_X_base_unit=kilos_X_base_unit,
+                    unit_X_package_mortar=unit_X_package_mortar,
+                    estimated_units_reference_mortar=producto.estimated_units_mortar,
+                    mortar_variation=mortar_variation,
+                    kilos_X_unit_mortar=kilos_X_unit_mortar
 
                 )
 
@@ -45,6 +67,8 @@ class ConsumoMaterialView(APIView):
                 {"message":"Ocurrió un error al registrar el material.", "error": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+
     def get(self, request, categoria_id):
         try:
             # Filtrar los consumos de materiales según la categoría proporcionada, ordenados por '-id'
