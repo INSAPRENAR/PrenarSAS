@@ -9,3 +9,5 @@ class Producto(models.Model):
     discounted_unit_price=models.FloatField()
     color=models.CharField(max_length=255)
     warehouse_quantity=models.IntegerField()
+    base_estimated_units=models.IntegerField(null=True, blank=True)
+    estimated_units_mortar=models.IntegerField(null=True, blank=True)
