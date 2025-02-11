@@ -37,3 +37,4 @@ from .listaProductosView import ListaProductoView
 from .estadoControlProduccionView import UpdatePedidoProductControl
 from .controlProduccionProducidosView import control_produccion_agrupado_completados
 from .estadoControlProduccionCompletadosView import UpdatePedidoProductControlCompletados
+from .listaProductosConsumoMaterialView import ConsumoMaterialListView

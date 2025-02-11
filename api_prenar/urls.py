@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import Register, loginView, UsersView, LogoutView, ListUserView, UserView, UserDetail, ClientesView, ClienteEspecificoView, PedidoView, PagoView, InventarioView, ProductoView, ProductoEspecificoView, DespachoView, ProductosPedidoDespachoView, ListaNumerosPedidosView, control_produccion_agrupado, InventarioPorProductoView, CalendarioProduccionView, CalendarioEspecificoView, MaterialView, MaterialDetailView, ConsumoMaterialView, CategoriaMaterialDetail, CategoriaMaterialView, PedidoDetailView, ProductosPedidoView, PedidoCountView, ProductosEnPedidosPendientesView, CantidadesTotalesProductosPendientesView, PedidoSaldosPendientesView, PedidoProductosUnidadesSolicitadasView, CalendarioProduccionStateDetalleView, CalendarioDespachoStateDetalleView, ListaProductoView, UpdatePedidoProductControl, control_produccion_agrupado_completados, UpdatePedidoProductControlCompletados
+from .views import Register, loginView, UsersView, LogoutView, ListUserView, UserView, UserDetail, ClientesView, ClienteEspecificoView, PedidoView, PagoView, InventarioView, ProductoView, ProductoEspecificoView, DespachoView, ProductosPedidoDespachoView, ListaNumerosPedidosView, control_produccion_agrupado, InventarioPorProductoView, CalendarioProduccionView, CalendarioEspecificoView, MaterialView, MaterialDetailView, ConsumoMaterialView, CategoriaMaterialDetail, CategoriaMaterialView, PedidoDetailView, ProductosPedidoView, PedidoCountView, ProductosEnPedidosPendientesView, CantidadesTotalesProductosPendientesView, PedidoSaldosPendientesView, PedidoProductosUnidadesSolicitadasView, CalendarioProduccionStateDetalleView, CalendarioDespachoStateDetalleView, ListaProductoView, UpdatePedidoProductControl, control_produccion_agrupado_completados, UpdatePedidoProductControlCompletados, ConsumoMaterialListView
 
 urlpatterns = [
     path('register', Register.as_view(), name='register'),
@@ -47,7 +47,7 @@ urlpatterns = [
     path('material/list/<int:categoria_id>/', MaterialDetailView.as_view(), name='material-list'),
     path('material/<int:id>/delete/', MaterialView.as_view(), name='material-delete'),
     path('consumo/material/register', ConsumoMaterialView.as_view(), name='consumo-material-register'),
-    path('consumo/material/list/<int:categoria_id>/', ConsumoMaterialView.as_view(), name='consumo-material-register'),
+    path('consumo/material/list/productos/categoria/<int:categoria_id>/producto/<int:producto_id>/', ConsumoMaterialView.as_view(), name='consumo-material-register'),
     path('categoria/material/<int:categoria_id>', CategoriaMaterialDetail.as_view(), name='categoria-material-data'),
     path('consumo/material/<int:id>/delete/', ConsumoMaterialView.as_view(), name='consumo-material-delete'),
     path('categoria/material/register', CategoriaMaterialView.as_view(), name='categoria-material-register'),
@@ -65,4 +65,5 @@ urlpatterns = [
     path('control/produccion/<str:pedido_id>/update', UpdatePedidoProductControl.as_view(), name='control-produccion-update'),
     path('control/produccion/completados', control_produccion_agrupado_completados, name='control-produccion-completados'),
     path('control/produccion/completados/<str:pedido_id>/update', UpdatePedidoProductControlCompletados.as_view(), name='control-produccion-completados-update'),
+    path('consumo/material/list/productos/categoria/<int:categoria_id>/', ConsumoMaterialListView.as_view(), name='consumo-material-list-productos-categoria'),
 ]

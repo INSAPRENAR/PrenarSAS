@@ -69,10 +69,13 @@ class ConsumoMaterialView(APIView):
             )
 
 
-    def get(self, request, categoria_id):
+    def get(self, request, categoria_id, producto_id):
         try:
-            # Filtrar los consumos de materiales según la categoría proporcionada, ordenados por '-id'
-            consumos = ConsumoMaterial.objects.filter(id_categoria=categoria_id).order_by('-id')
+            # Filtrar los consumos de materiales según la categoría y producto proporcionados
+            consumos = ConsumoMaterial.objects.filter(
+                id_categoria=categoria_id,
+                id_producto=producto_id
+            ).select_related('id_categoria', 'id_producto').order_by('-id')
 
             # Inicializar el paginador
             paginator = PageNumberPagination()
@@ -83,7 +86,7 @@ class ConsumoMaterialView(APIView):
                 # Si no hay consumos, devolver un mensaje indicando que no se encontraron datos
                 return Response(
                     {
-                        "message": "No se encontraron consumos de materiales para la categoría especificada.",
+                        "message": "No se encontraron consumos de materiales para la categoría y producto especificados.",
                         "data": []
                     },
                     status=status.HTTP_200_OK
