@@ -12,26 +12,35 @@ class InventarioPorProductoView(APIView):
         try:
             # Obtener los parámetros de búsqueda
             order_code = request.query_params.get('order_code', None)
-            year = request.query_params.get('year', None)
-            month = request.query_params.get('month', None)
+            start_date = request.query_params.get('start_date', None)
+            end_date = request.query_params.get('end_date', None)
+            name_cliente=request.query_params.get('name_cliente',None)
             
-            # Filtrar los inventarios por el id_producto proporcionado
-            # y aplicar los filtros adicionales si los parámetros están presentes
+            # Filtrar los inventarios por el id_producto proporcionado y aplicar los filtros adicionales si los parámetros están presentes
             filters = Q(id_producto=id_producto)
-            
+
             if order_code:
-                filters &= Q(id_pedido__order_code=order_code)
+                filters &= Q(id_pedido__order_code__icontains=order_code)
             
-            if year and month:
-                filters &= Q(inventory_date__year=year, inventory_date__month=month)
+            if name_cliente:
+                filters &= Q(id_pedido__id_client__name__icontains=name_cliente)
+            
+            # Filtrar por rango de fechas si 'start_date' y 'end_date' están presentes
+            if start_date and end_date:
+                filters &= Q(inventory_date__gte=start_date, inventory_date__lte=end_date)
+            elif start_date:
+                filters &= Q(inventory_date__gte=start_date)
+            elif end_date:
+                filters &= Q(inventory_date__lte=end_date)
 
             # Filtrar los inventarios aplicando los filtros
             inventarios = Inventario.objects.filter(filters).order_by('-id')
 
+            # Si no se encuentran inventarios, devolver una respuesta vacía con mensaje
             if not inventarios.exists():
                 return Response(
-                    {"message": f"No se encontraron inventarios para el producto con ID {id_producto}."},
-                    status=status.HTTP_404_NOT_FOUND
+                    {"message": "No se encontraron registros con estos datos de búsqueda."},
+                    status=status.HTTP_200_OK
                 )
 
             # Inicializar el paginador
