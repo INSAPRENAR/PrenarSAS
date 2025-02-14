@@ -40,15 +40,29 @@ class ProductoView(APIView):
 
     def get(self, request):
         try:
-            # Obtener todos los productos ordenados por '-id' (opcional)
-            productos = Producto.objects.all().order_by('-id')
+            # Obtener los parámetros de búsqueda
+            name = request.query_params.get('name', None)
+            product_code = request.query_params.get('product_code', None)
 
+            productos = Producto.objects.all()
+
+            # Aplicar filtro por 'name' de forma insensible a mayúsculas/minúsculas
+            if name:
+                productos = productos.filter(name__icontains=name)
+            
+            # Aplicar filtro por 'product_code' de forma insensible a mayúsculas/minúsculas
+            if product_code:
+                productos = productos.filter(product_code__icontains=product_code)
+            
+            # Ordenar los productos
+            productos = productos.order_by('-id')
+        
             if not productos.exists():
-                return Response([], status=status.HTTP_200_OK)  # Devolver array vacío si no hay productos
-
+                return Response([], status=status.HTTP_200_OK)
+            
             # Inicializar el paginador
             paginator = PageNumberPagination()
-            paginator.page_size = 20  # Define el número de productos por página (ajusta según tus necesidades)
+            paginator.page_size = 20  # Define el número de productos por página
             paginated_productos = paginator.paginate_queryset(productos, request)
 
             # Serializar los productos paginados
