@@ -8,10 +8,24 @@ from django.db.models import Count, Q
 
 class ClientesView(APIView):
     def get(self, request):
+        #atributos para filtros
+        name=request.query_params.get('name',None)
+        identification=request.query_params.get('identification', None)
         # incluimos el número de pedidos pendientes (state=1) por cada cliente
         clientes = Cliente.objects.annotate(
             pedidos_pendientes=Count('pedidos', filter=Q(pedidos__state=1))
-        ).order_by('-id')
+        )
+
+        # Aplicar el filtro por nombre (búsqueda parcial e insensible a mayúsculas/minúsculas)
+        if name:
+            clientes = clientes.filter(name__icontains=name)
+        
+        # Aplicar el filtro por identificación (búsqueda parcial e insensible a mayúsculas/minúsculas)
+        if identification:
+            clientes = clientes.filter(identification__icontains=identification)
+
+        # Ordenar los resultados, por ejemplo, de forma descendente según 'id'
+        clientes = clientes.order_by('-id')
 
         # Configurar el paginador
         paginator = PageNumberPagination()
