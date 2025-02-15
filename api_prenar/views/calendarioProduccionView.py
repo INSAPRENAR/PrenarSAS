@@ -3,6 +3,7 @@ from api_prenar.serializers.calendarioSerializers import CalendarioSerializer, C
 from rest_framework.response import Response
 from rest_framework import status, pagination
 from api_prenar.models import Calendario
+from django.db.models import Q
 
 class CalendarioProduccionView(APIView):
 
@@ -28,18 +29,47 @@ class CalendarioProduccionView(APIView):
     
     def get(self, request, tipo=None):
         try:
+            # Obtener parámetros de filtro desde la URL
+            start_date = request.query_params.get('start_date', None)
+            end_date = request.query_params.get('end_date', None)
+            order_code = request.query_params.get('order_code', None)
+            product_name = request.query_params.get('product_name', None)
             # Filtrar los calendarios según el tipo
             if tipo == 1:
-                calendarios = Calendario.objects.filter(type=1).order_by('-id')
+                calendarios = Calendario.objects.filter(type=1)
                 serializer_class = CalendarioTipo1Serializer
             elif tipo == 2:
-                calendarios = Calendario.objects.filter(type=2).order_by('-id')
+                calendarios = Calendario.objects.filter(type=2)
                 serializer_class = CalendarioTipo2Serializer
             else:
                 return Response(
                     {"data": [], "message": "Tipo no válido."},
                     status=status.HTTP_400_BAD_REQUEST
                 )
+            
+            # Construir el filtro adicional utilizando objetos Q
+            filters = Q()
+            # Filtro por rango de fecha en calendar_date
+            if start_date and end_date:
+                filters &= Q(calendar_date__gte=start_date, calendar_date__lte=end_date)
+            elif start_date:
+                filters &= Q(calendar_date__gte=start_date)
+            elif end_date:
+                filters &= Q(calendar_date__lte=end_date)
+
+            # Filtro por order_code en el modelo Pedido (relacionado mediante id_pedido)
+            if order_code:
+                filters &= Q(id_pedido__order_code__icontains=order_code)
+
+            # Filtro por name en el modelo Producto (relacionado mediante id_producto)
+            if product_name:
+                filters &= Q(id_producto__name__icontains=product_name)
+            
+            # Aplicar los filtros adicionales al queryset
+            calendarios = calendarios.filter(filters)
+
+            # Ordenar los calendarios por '-id'
+            calendarios = calendarios.order_by('-id')
 
             # Verificar si hay calendarios para el tipo dado
             if not calendarios.exists():
