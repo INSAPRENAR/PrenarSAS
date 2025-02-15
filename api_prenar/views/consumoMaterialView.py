@@ -6,6 +6,7 @@ from api_prenar.models.categoria_material import CategoriaMaterial
 from api_prenar.models import ConsumoMaterial, Producto
 from django.shortcuts import get_object_or_404
 from rest_framework.pagination import PageNumberPagination
+from django.db.models import Q
 
 class ConsumoMaterialView(APIView):
     
@@ -71,19 +72,30 @@ class ConsumoMaterialView(APIView):
 
     def get(self, request, categoria_id, producto_id):
         try:
-            # Filtrar los consumos de materiales según la categoría y producto proporcionados
-            consumos = ConsumoMaterial.objects.filter(
-                id_categoria=categoria_id,
-                id_producto=producto_id
-            ).select_related('id_categoria', 'id_producto').order_by('-id')
+            # Obtener parámetros de fecha para filtrar consumption_date
+            start_date = request.query_params.get('start_date', None)
+            end_date = request.query_params.get('end_date', None)
+
+            # Construir el filtro inicial: consumos para la categoría y producto dados
+            filters = Q(id_categoria=categoria_id) & Q(id_producto=producto_id)
+
+            # Agregar el filtro para consumption_date según las fechas recibidas
+            if start_date and end_date:
+                filters &= Q(consumption_date__gte=start_date, consumption_date__lte=end_date)
+            elif start_date:
+                filters &= Q(consumption_date__gte=start_date)
+            elif end_date:
+                filters &= Q(consumption_date__lte=end_date)
+
+            # Aplicar los filtros y ordenar los consumos por '-id'
+            consumos = ConsumoMaterial.objects.filter(filters).select_related('id_categoria', 'id_producto').order_by('-id')
 
             # Inicializar el paginador
             paginator = PageNumberPagination()
-            paginator.page_size = 20  # Define el número de consumos por página (ajusta según tus necesidades)
+            paginator.page_size = 20  # Número de consumos por página
             paginated_consumos = paginator.paginate_queryset(consumos, request)
 
             if not consumos.exists():
-                # Si no hay consumos, devolver un mensaje indicando que no se encontraron datos
                 return Response(
                     {
                         "message": "No se encontraron consumos de materiales para la categoría y producto especificados.",
@@ -95,7 +107,7 @@ class ConsumoMaterialView(APIView):
             # Serializar los consumos paginados
             serializer = ConsumoMaterialSerializer(paginated_consumos, many=True)
 
-            # Retornar la respuesta paginada con el mensaje
+            # Retornar la respuesta paginada
             return paginator.get_paginated_response(serializer.data)
 
         except Exception as e:
