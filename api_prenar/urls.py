@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import Register, loginView, UsersView, LogoutView, ListUserView, UserView, UserDetail, ClientesView, ClienteEspecificoView, PedidoView, PagoView, InventarioView, ProductoView, ProductoEspecificoView, DespachoView, ProductosPedidoDespachoView, ListaNumerosPedidosView, control_produccion_agrupado, InventarioPorProductoView, CalendarioProduccionView, CalendarioEspecificoView, MaterialView, MaterialDetailView, ConsumoMaterialView, CategoriaMaterialDetail, CategoriaMaterialView, PedidoDetailView, ProductosPedidoView, PedidoCountView, ProductosEnPedidosPendientesView, CantidadesTotalesProductosPendientesView, PedidoSaldosPendientesView, PedidoProductosUnidadesSolicitadasView, CalendarioProduccionStateDetalleView, CalendarioDespachoStateDetalleView, ListaProductoView, UpdatePedidoProductControl, control_produccion_agrupado_completados, UpdatePedidoProductControlCompletados, ConsumoMaterialListView
+from .views import Register, loginView, UsersView, LogoutView, ListUserView, UserView, UserDetail, ClientesView, ClienteEspecificoView, PedidoView, PagoView, InventarioView, ProductoView, ProductoEspecificoView, DespachoView, ProductosPedidoDespachoView, ListaNumerosPedidosView, control_produccion_agrupado, InventarioPorProductoView, CalendarioProduccionView, CalendarioEspecificoView, MaterialView, MaterialDetailView, ConsumoMaterialView, CategoriaMaterialDetail, CategoriaMaterialView, PedidoDetailView, ProductosPedidoView, PedidoCountView, ProductosEnPedidosPendientesView, CantidadesTotalesProductosPendientesView, PedidoSaldosPendientesView, PedidoProductosUnidadesSolicitadasView, CalendarioProduccionStateDetalleView, CalendarioDespachoStateDetalleView, ListaProductoView, UpdatePedidoProductControl, control_produccion_agrupado_completados, UpdatePedidoProductControlCompletados, ConsumoMaterialListView, reportePedidosResumenView
 
 urlpatterns = [
     path('register', Register.as_view(), name='register'),
@@ -66,4 +66,5 @@ urlpatterns = [
     path('control/produccion/completados', control_produccion_agrupado_completados, name='control-produccion-completados'),
     path('control/produccion/completados/<str:pedido_id>/update', UpdatePedidoProductControlCompletados.as_view(), name='control-produccion-completados-update'),
     path('consumo/material/list/productos/categoria/<int:categoria_id>/', ConsumoMaterialListView.as_view(), name='consumo-material-list-productos-categoria'),
+    path('reporte/pedidos/resumen/', reportePedidosResumenView.as_view(), name='reporte-pedidos-resumen'),
 ]
