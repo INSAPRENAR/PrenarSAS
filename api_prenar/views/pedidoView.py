@@ -5,6 +5,7 @@ from api_prenar.serializers.pedidoSerializers import PedidoSerializer
 from api_prenar.models import Cliente, Pedido, Inventario, Calendario, Despacho, Pago
 from django.db import transaction
 from rest_framework.pagination import PageNumberPagination
+from django.db.models import Q
 
 class PedidoView(APIView):
 
@@ -17,8 +18,24 @@ class PedidoView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        # Filtrar los pedidos asociados al cliente, ordenados por '-id'
-        pedidos = Pedido.objects.filter(id_client=cliente).order_by('-id')
+        # Obtener los parámetros de búsqueda de la query string
+        order_code = request.query_params.get('order_code', None)
+        start_date = request.query_params.get('start_date', None)
+        end_date = request.query_params.get('end_date', None)
+
+        # Crear filtros para los pedidos
+        filters = Q(id_client=cliente)
+        if order_code:
+            filters &= Q(order_code__icontains=order_code)
+        if start_date and end_date:
+            filters &= Q(order_date__gte=start_date, order_date__lte=end_date)
+        elif start_date:
+            filters &= Q(order_date__gte=start_date)
+        elif end_date:
+            filters &= Q(order_date__lte=end_date)
+
+        # Filtrar los pedidos según los criterios anteriores
+        pedidos = Pedido.objects.filter(filters).order_by('-id')
 
         if not pedidos.exists():
             return Response(
@@ -26,9 +43,9 @@ class PedidoView(APIView):
                 status=status.HTTP_200_OK
             )
 
-        # Inicializar el paginador
+        # Inicializar y configurar el paginador
         paginator = PageNumberPagination()
-        paginator.page_size = 20  # Define el número de pedidos por página
+        paginator.page_size = 20
         paginated_pedidos = paginator.paginate_queryset(pedidos, request)
 
         # Serializar los pedidos paginados
