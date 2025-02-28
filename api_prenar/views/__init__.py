@@ -39,3 +39,4 @@ from .controlProduccionProducidosView import control_produccion_agrupado_complet
 from .estadoControlProduccionCompletadosView import UpdatePedidoProductControlCompletados
 from .listaProductosConsumoMaterialView import ConsumoMaterialListView
 from .reporteResumenPedidos import reportePedidosResumenView
+from .reporteResumenPedidosExcel import downloadPedidosResumenView
