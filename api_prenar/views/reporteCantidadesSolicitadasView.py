@@ -16,11 +16,11 @@ class CantidadesTotalesProductosPendientesView(APIView):
                 for producto in pedido.products:
                     referencia = producto.get("referencia")
                     cantidad_unidades = producto.get("cantidad_unidades", 0)
-                    control = producto.get("control", 0)  # Obtener el valor de 'control', por defecto 0
+                    control = producto.get("control", False)  # Obtener el valor de 'control', por defecto 0
                     cantidades_despachadas = producto.get("cantidades_despachadas", 0)
                     
                     # Solo considerar productos con 'control' > 0
-                    if referencia is not None and control > 0:
+                    if referencia is not None and control == False:
                         # Calcular lo que falta despachar de este producto
                         diferencia = cantidad_unidades - cantidades_despachadas
 
