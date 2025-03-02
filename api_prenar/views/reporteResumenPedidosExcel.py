@@ -82,7 +82,7 @@ class downloadPedidosResumenView(APIView):
 
                 # Combinar las celdas para las columnas que se repiten
                 # (order_code, client_name, order_date, total, value_paid, outstanding_balance)
-                # desde current_row hasta current_row + num_products - 1
+                # desde current_row hasta current_row + num_products - 1  
                 start_row = current_row
                 end_row = current_row + num_products - 1
 

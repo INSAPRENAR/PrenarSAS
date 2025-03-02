@@ -7,7 +7,7 @@ class PedidoSaldosPendientesView(APIView):
     def get(self, request):
         try:
             # Obtener pedidos con state=1
-            pedidos = Pedido.objects.filter(state=1).select_related('id_client')
+            pedidos = Pedido.objects.filter(outstanding_balance__gt=0).select_related('id_client')
 
             # Construir la respuesta con los datos requeridos
             pedidos_data = [
