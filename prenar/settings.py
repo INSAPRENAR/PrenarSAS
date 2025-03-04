@@ -137,6 +137,7 @@ AUTH_USER_MODEL = 'api_prenar.User'
 CORS_ALLOW_CREDENTIALS=True
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:5173',  # O el origen de tu frontend si lo tienes
+    'https://66nx2637-5173.use2.devtunnels.ms',
 ]
 
 # Configuración de JWT
