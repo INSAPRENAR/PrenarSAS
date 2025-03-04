@@ -9,6 +9,7 @@ class PedidoSerializer(serializers.ModelSerializer):
     def validate_products(self, products):
         """
         Valida y calcula el total para cada producto y el total general.
+        Si el campo 'descuento_total' es mayor a 0, se aplica el descuento sobre el total del producto.
         """
         total_general = 0
 
@@ -23,8 +24,15 @@ class PedidoSerializer(serializers.ModelSerializer):
             if not cantidad or not unit_price:
                 raise serializers.ValidationError("Cada producto debe tener 'cantidad' y un precio válido.")
 
-            # Calcula el total para el producto
+            # Calcula el total para el producto sin descuento
             product_total = cantidad * unit_price
+
+            # Si se especifica un descuento mayor a 0, se aplica al total
+            discount_percentage = product.get('descuento_total', 0)
+            if discount_percentage and discount_percentage > 0:
+                discount_amount = product_total * (discount_percentage / 100)
+                product_total = product_total - discount_amount
+
             product['total'] = product_total
 
             # Suma al total general
