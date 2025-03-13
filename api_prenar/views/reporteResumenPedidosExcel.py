@@ -58,8 +58,9 @@ class downloadPedidosResumenView(APIView):
                 "$ Valor Por Cobrar",
                 "Producto",
                 "Cantidad Solicitada",
-                "Cantidad Entregada",
-                "Cantidad faltante"
+                "Cantidad Despachada",
+                "Cantidad a Producir / Despachar",
+                "$ Valor unidades Pendientes a Producir / Despachar"
             ]
             ws.append(headers)
             # Aplicar negrita a cada celda del encabezado (fila 1)
@@ -119,12 +120,14 @@ class downloadPedidosResumenView(APIView):
                         cantidad_unidades = product.get("cantidad_unidades", 0)
                         cantidades_despachadas = product.get("cantidades_despachadas", 0)
                         cantidad_faltante = cantidad_unidades - cantidades_despachadas
+                        valor_unidades_pendientes = product.get("valor_unidades_pendientes",0)
 
                     # Colocar datos del producto en columnas G..J (7..10)
                     ws.cell(row=row_index, column=7).value = name_color
                     ws.cell(row=row_index, column=8).value = cantidad_unidades
                     ws.cell(row=row_index, column=9).value = cantidades_despachadas
                     ws.cell(row=row_index, column=10).value = cantidad_faltante
+                    ws.cell(row=row_index, column=11). value = valor_unidades_pendientes
 
                 # Avanzar el current_row para el siguiente pedido
                 current_row += num_products
@@ -132,7 +135,7 @@ class downloadPedidosResumenView(APIView):
             max_col = ws.max_column
             for col_num in range(1, max_col + 1):
                 col_letter = get_column_letter(col_num)
-                ws.column_dimensions[col_letter].width = 25
+                ws.column_dimensions[col_letter].width = 55
             
             # Definir un borde fino para aplicar a las celdas
             thin_border = Border(
@@ -151,7 +154,7 @@ class downloadPedidosResumenView(APIView):
             response = HttpResponse(
                 content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
-            response["Content-Disposition"] = 'attachment; filename="pedidos.xlsx"'
+            response["Content-Disposition"] = 'attachment; filename="ReporteResumenPedidos.xlsx"'
             wb.save(response)
             return response
 
