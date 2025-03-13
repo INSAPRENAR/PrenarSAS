@@ -19,6 +19,8 @@ class ConsumoMaterialView(APIView):
                 data_quantity_mortar_used=serializer.validated_data.get('quantity_mortar_used')
                 quantity_produced=serializer.validated_data.get('quantity_produced')
                 id_producto=serializer.validated_data.get('id_producto')
+                estimated_base=serializer.validated_data.get('estimated_base_reference_units')
+                estimated_mortar=serializer.validated_data.get('estimated_units_reference_mortar')
 
                 categoria_material=get_object_or_404(CategoriaMaterial, id=id_categoria.id)
                 producto = get_object_or_404(Producto, id=id_producto.id)
@@ -26,11 +28,11 @@ class ConsumoMaterialView(APIView):
 
                 # Cálculos adicionales para los campos
                 unit_X_base_package = quantity_produced / data_base_quantity_used if data_base_quantity_used != 0 else 0
-                base_variation = unit_X_base_package - producto.base_estimated_units
+                base_variation = unit_X_base_package - estimated_base
                 kilos_X_base_unit = data_base_quantity_used / quantity_produced if quantity_produced != 0 else 0
 
                 unit_X_package_mortar = quantity_produced / data_quantity_mortar_used if data_quantity_mortar_used != 0 else 0
-                mortar_variation = unit_X_package_mortar - producto.estimated_units_mortar
+                mortar_variation = unit_X_package_mortar - estimated_mortar
                 kilos_X_unit_mortar = data_quantity_mortar_used / quantity_produced if quantity_produced != 0 else 0
 
                 total = data_base_quantity_used + data_quantity_mortar_used
@@ -45,11 +47,11 @@ class ConsumoMaterialView(APIView):
                     total=total,
                     email_user=serializer.validated_data.get('email_user'),
                     unit_X_base_package=unit_X_base_package,
-                    estimated_base_reference_units=producto.base_estimated_units,
+                    estimated_base_reference_units=estimated_base,
                     base_variation=base_variation,
                     kilos_X_base_unit=kilos_X_base_unit,
                     unit_X_package_mortar=unit_X_package_mortar,
-                    estimated_units_reference_mortar=producto.estimated_units_mortar,
+                    estimated_units_reference_mortar=estimated_mortar,
                     mortar_variation=mortar_variation,
                     kilos_X_unit_mortar=kilos_X_unit_mortar
 

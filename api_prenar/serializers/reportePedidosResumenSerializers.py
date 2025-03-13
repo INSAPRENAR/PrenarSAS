@@ -29,5 +29,14 @@ class ReportePedidosResumenSerializer(serializers.ModelSerializer):
         for product in products:
             cantidad_unidades = product.get("cantidad_unidades", 0)
             cantidades_despachadas = product.get("cantidades_despachadas", 0)
-            product["cantidad_entregar"] = cantidad_unidades - cantidades_despachadas
+            cantidad_entregar = cantidad_unidades - cantidades_despachadas
+            product["cantidad_entregar"] = cantidad_entregar
+            
+            # Calculamos valor_unitario_pendientes según el campo usar_descuento
+            if product.get("usar_descuento", False):
+                # Si control es True, usamos vr_unitario_descuento
+                product["valor_unidades_pendientes"] = cantidad_entregar * product.get("vr_unitario_descuento", 0)
+            else:
+                # Si control es False, usamos vr_unitario
+                product["valor_unidades_pendientes"] = cantidad_entregar * product.get("vr_unitario", 0)
         return products
