@@ -8,25 +8,28 @@ class DespachoView(APIView):
 
     def get(self, request, pedido_id):
         try:
-            # Filtrar despachos por pedido_id y usar select_related para obtener el nombre del producto relacionado
-            despachos = Despacho.objects.filter(id_pedido=pedido_id).select_related('id_producto')
-
-            # Verificamos si no se encontraron despachos
+            # Filtrar despachos por pedido_id
+            despachos = Despacho.objects.filter(id_pedido=pedido_id)
+            
             if not despachos:
                 return Response(
                     {"message": "No hay despachos registrados para este pedido.", "data": []},
                     status=status.HTTP_200_OK
                 )
 
-            # Serializamos los despachos y también incluimos el nombre del producto
             despachos_data = []
             for despacho in despachos:
                 despacho_data = DespachoSerializer(despacho).data
-                # Añadir el nombre del producto al diccionario de datos del despacho
-                despacho_data['id_producto_name'] = despacho.id_producto.name
+                # Se asume que despacho_data['products'] es una lista de diccionarios con los datos de cada producto
+                products = despacho_data.get("products", [])
+                # Crear un resumen de los productos: nombre (referencia) y cantidad
+                products_summary = ", ".join([
+                    f"{p.get('name', 'Sin nombre')} (Ref: {p.get('referencia', '-')}, Cant: {p.get('cantidad', 0)})"
+                    for p in products
+                ])
+                despacho_data["products_summary"] = products_summary
                 despachos_data.append(despacho_data)
 
-            # Devolver los datos de los despachos
             return Response(
                 {"message": "Despachos obtenidos exitosamente.", "data": despachos_data},
                 status=status.HTTP_200_OK
@@ -45,66 +48,68 @@ class DespachoView(APIView):
     
     def post(self, request):
         serializer = DespachoSerializer(data=request.data)
-
         if serializer.is_valid():
-            id_pedido = serializer.validated_data['id_pedido'].id
-            id_producto = serializer.validated_data['id_producto'].id
-            amount = serializer.validated_data['amount']
-
+            pedido_id = serializer.validated_data['id_pedido'].id
+            # Se espera que el campo "products" sea una lista de diccionarios
+            productos_despacho = serializer.validated_data['products']
             try:
                 # Obtener el pedido relacionado
-                pedido = Pedido.objects.get(id=id_pedido)
-
-                # Validar que el producto existe en el campo 'products'
-                producto_encontrado = None
-                for producto in pedido.products:
-                    if producto['referencia'] == id_producto:  # Comparar correctamente
-                        producto_encontrado = producto
-                        break
-
-                if not producto_encontrado:
-                    return Response(
-                        {"message": f"No se encontró la referencia del producto {id_producto} en el pedido."},
-                        status=status.HTTP_404_NOT_FOUND
-                    )
-
-                # Validar la cantidad total acumulada
-                cantidad_disponible = producto_encontrado['cantidad_unidades']
-                despachos_existentes = Despacho.objects.filter(id_pedido=id_pedido, id_producto=id_producto)
-                cantidad_despachada = sum(despacho.amount for despacho in despachos_existentes)
-
-                if cantidad_despachada + amount > cantidad_disponible:
-                    return Response(
-                        {
-                            "message": f"La cantidad solicitada ({amount}) más las cantidades ya despachadas ({cantidad_despachada}) exceden las unidades solicitadas ({cantidad_disponible})."
-                        },
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
-
-                # Actualizar el campo 'cantidades_despachadas' en el JSON del producto correspondiente en el pedido
-                if 'cantidades_despachadas' not in producto_encontrado:
-                    producto_encontrado['cantidades_despachadas'] = 0
-                producto_encontrado['cantidades_despachadas'] += amount
-
-                # Verificar si TODOS los productos están totalmente despachados
-                all_fully_dispatched = True
-                for prod in pedido.products:  # Recorremos todos los productos del pedido
-                    cantidad_unidades = prod.get('cantidad_unidades', 0)
-                    cantidades_despachadas = prod.get('cantidades_despachadas', 0)
+                pedido = Pedido.objects.get(id=pedido_id)
+                # Iterar sobre cada producto a despachar
+                for prod_despacho in productos_despacho:
+                    referencia = prod_despacho.get('referencia')
+                    cantidad_despacho = prod_despacho.get('cantidad')
                     
-                    # Si alguno no cumple que cantidades_despachadas == cantidad_unidades, no se cambia el estado
-                    if cantidades_despachadas < cantidad_unidades:
+                    # Buscar el producto correspondiente en el JSON del pedido
+                    producto_encontrado = None
+                    for producto in pedido.products:
+                        if producto.get('referencia') == referencia:
+                            producto_encontrado = producto
+                            break
+                    if not producto_encontrado:
+                        return Response(
+                            {"message": f"No se encontró la referencia del producto {referencia} en el pedido."},
+                            status=status.HTTP_404_NOT_FOUND
+                        )
+                    
+                    # Validar la cantidad total acumulada
+                    # Se usa el campo "cantidad" del pedido (antes "cantidad_unidades")
+                    cantidad_disponible = producto_encontrado['cantidad_unidades'] 
+                    
+                    # Sumar la cantidad despachada previamente para este producto
+                    despachos_existentes = Despacho.objects.filter(id_pedido=pedido_id)
+                    cantidad_despachada_total = 0
+                    for d in despachos_existentes:
+                        for dprod in d.products:
+                            if dprod.get('referencia') == referencia:
+                                cantidad_despachada_total += dprod.get('cantidad', 0)
+                    
+                    if cantidad_despachada_total + cantidad_despacho > cantidad_disponible:
+                        return Response(
+                            {"message": f"La cantidad solicitada ({cantidad_despacho}) más las cantidades ya despachadas ({cantidad_despachada_total}) exceden las unidades solicitadas ({cantidad_disponible}) para el producto {referencia}."},
+                            status=status.HTTP_400_BAD_REQUEST
+                        )
+                    
+                    # Actualizar el campo 'cantidades_despachadas' en el JSON del producto correspondiente
+                    if 'cantidades_despachadas' not in producto_encontrado:
+                        producto_encontrado['cantidades_despachadas'] = 0
+                    producto_encontrado['cantidades_despachadas'] += cantidad_despacho
+                
+                # Verificar si TODOS los productos del pedido están totalmente despachados
+                all_fully_dispatched = True
+                for prod in pedido.products:
+                    cantidad_total = prod.get('cantidad', 0)
+                    despachado = prod.get('cantidades_despachadas', 0)
+                    if despachado < cantidad_total:
                         all_fully_dispatched = False
                         break
-
-                # Si todos están despachados, cambiar el estado del pedido a '2'
                 if all_fully_dispatched:
                     pedido.state = 2
-
-                # Guardar los cambios en el campo 'products' del modelo 'Pedido'
-                pedido.products = pedido.products  # Esto marca el campo como modificado
+                
+                # Guardar los cambios en el pedido
+                pedido.products = pedido.products  # Marca el campo como modificado
                 pedido.save()
-
+                
                 # Crear el despacho
                 despacho = serializer.save()
                 return Response(
@@ -114,15 +119,9 @@ class DespachoView(APIView):
                     },
                     status=status.HTTP_201_CREATED
                 )
-
             except Pedido.DoesNotExist:
                 return Response(
-                    {"message": f"No se encontró el pedido con ID {id_pedido}."},
-                    status=status.HTTP_404_NOT_FOUND
-                )
-            except Producto.DoesNotExist:
-                return Response(
-                    {"message": f"No se encontró el producto con ID {id_producto}."},
+                    {"message": f"No se encontró el pedido con ID {pedido_id}."},
                     status=status.HTTP_404_NOT_FOUND
                 )
             except Exception as e:
@@ -130,7 +129,6 @@ class DespachoView(APIView):
                     {"message": "Error al registrar el despacho.", "error": str(e)},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
-
         # Datos inválidos
         return Response(
             {"message": "Error al registrar el despacho.", "errors": serializer.errors},
