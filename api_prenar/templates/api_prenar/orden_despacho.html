@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+{% load static %}
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Orden de Cargue</title>
+  <style>
+    body {
+      font-family: "Arial", sans-serif;
+      font-size: 10px;
+      margin: 20px;
+      color: #000;
+    }
+    /* Contenedor para cada copia de la orden */
+    .order-copy {
+      margin-bottom: 20px;
+    }
+    /* Fuerza salto de página antes del elemento */
+    .new-page {
+      page-break-before: always;
+    }
+    /* Línea separadora entre copias (si se desea, aunque ya no se use si hay salto de página) */
+    .separator {
+      border-top: 2px dashed #000;
+      margin: 5px 0;
+    }
+    /* Encabezado */
+    .header-section {
+      display: flex;
+      justify-content: space-between;
+      align-items: stretch;
+      margin-bottom: 5px;
+    }
+    .header-section > div {
+      border: 1px solid #000;
+      padding: 5px;
+      flex: 1;
+    }
+    .col-left {
+      text-align: left;
+    }
+    .col-center {
+      text-align: center;
+    }
+    .col-right {
+      text-align: center;
+    }
+    .col-center .title {
+      font-size: 12px;
+      font-weight: bold;
+      padding-bottom: 5px;
+      margin-bottom: 10px;
+      border-bottom: 1px solid #000;
+    }
+    .col-center .subtitle {
+      font-size: 11px;
+      margin-top: 10px;
+    }
+    hr {
+      margin: 5px 0;
+      border: none;
+      border-top: 1px solid #000;
+    }
+    /* Tabla de información principal */
+    .info-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 5px;
+    }
+    .info-table td {
+      padding: 6px 4px;
+      vertical-align: top;
+      border: 1px solid #000;
+    }
+    .info-table td strong {
+      width: 120px;
+      display: inline-block;
+    }
+    /* Sección de productos */
+    .section-title {
+      font-weight: bold;
+      font-size: 14px;
+      text-align: center;
+      margin: 15px 0 0 0;
+    }
+    .products-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 5px;
+    }
+    .products-table th,
+    .products-table td {
+      border: 1px solid #000;
+      padding: 5px;
+      text-align: left;
+    }
+    .products-table th {
+      background-color: #f0f0f0;
+    }
+    /* Observaciones */
+    .observations {
+      margin-top: 5px;
+      border: 1px solid #000;
+      padding: 8px;
+      min-height: 5px;
+    }
+    .observations label {
+      font-weight: bold;
+    }
+    /* Tabla de firmas */
+    .firmas-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+      table-layout: fixed;
+    }
+    .firmas-table td {
+      border: 1px solid #000;
+      padding: 10px;
+      vertical-align: middle;
+      width: 23.33%;
+    }
+    /* Notas debajo de las firmas */
+    .firma-notes {
+      font-size: 8px;
+      text-align: center;
+      margin-top: 10px;
+      padding: 5px;
+    }
+    .firma-notes p {
+      margin: 5px 0;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Primera copia de la orden -->
+  <div class="order-copy">
+    <!-- Encabezado / Logo / Datos principales -->
+    <div class="header-section">
+      <div class="col-left">
+        <img src="{% static 'path/to/logo.png' %}" alt="Logo" style="max-height:60px;">
+      </div>
+      <div class="col-center">
+        <div class="title">Orden de Cargue</div>
+        <div class="subtitle">Gestion de operaciones y produccion</div>
+      </div>
+      <div class="col-right">
+        <strong>Orden de Cargue N°:</strong> {{ cargo_number }}
+      </div>
+    </div>
+
+    <!-- Tabla de información principal -->
+    <table class="info-table">
+      <tr>
+        <td><strong>Hora Entrada:</strong> {{ entry_time }}</td>
+        <td><strong>Hora Salida:</strong> {{ departure_time }}</td>
+        <td><strong>No. Pedido:</strong> {{ order_code }}</td>
+      </tr>
+      <tr>
+        <td><strong>Cliente:</strong> {{ client_name }}</td>
+        <td><strong>Transportador:</strong> {{ driver }}</td>
+        <td><strong>Cédula Transp.:</strong> {{ driver_identification }}</td>
+      </tr>
+      <tr>
+        <td><strong>Placa Veh.:</strong> {{ plate }}</td>
+        <td><strong>Tipo Vehículo:</strong> {{ vehicle_type }}</td>
+        <td><strong>Contacto:</strong> {{ phone }}</td>
+      </tr>
+      <tr>
+        <td><strong>No. Rótulo:</strong> {{ rotulo_number }}</td>
+        <td><strong>No. Orden Prod.:</strong> {{ production_number }}</td>
+        <td></td>
+      </tr>
+    </table>
+
+    <!-- Sección de productos -->
+    <div class="section-title">Detalle de Productos</div>
+    <table class="products-table">
+      <thead>
+        <tr>
+          <th>Producto</th>
+          <th>Color</th>
+          <th>Cantidad</th>
+          <th>Núm. Estibas</th>
+          <th>Lote</th>
+          <th>Núm. Rótulo</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for product in products %}
+        <tr>
+          <td>{{ product.name }}</td>
+          <td>{{ product.color }}</td>
+          <td>{{ product.cantidad }}</td>
+          <td>{{ product.numero_estibas }}</td>
+          <td>{{ product.lote }}</td>
+          <td>{{ product.numero_rotulo }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <!-- Observaciones -->
+    <div class="observations">
+      <label>Observaciones:</label>
+      <p>{{ observation }}</p>
+    </div>
+
+    <!-- Sección de Firmas -->
+    <table class="firmas-table">
+      <tr>
+        <td class="desc">Autoriza Despacho:</td>
+        <td class="value">{{ dispatcher }}</td>
+        <td class="signature-cell">&nbsp;</td>
+      </tr>
+      <tr>
+        <td class="desc">Encargado de Almacén:</td>
+        <td class="value">{{ warehouseman }}</td>
+        <td class="signature-cell">&nbsp;</td>
+      </tr>
+      <tr>
+        <td class="desc">Recibe a Satisfacción:</td>
+        <td class="value">{{ driver }}</td>
+        <td class="signature-cell">&nbsp;</td>
+      </tr>
+    </table>
+
+    <!-- Notas debajo de las firmas -->
+    <div class="firma-notes">
+      <p>
+        EL TRANSPORTADOR ACEPTA QUE A RECIBIDO LA CANTIDAD DESCRITA EN EL SIGUIENTE DOCUMENTO SIN IMPERFECTOS Y CONDICIONES OPTIMAS PARA SU INSTALACION.
+      </p>
+      <p>
+        LAS ESTIBAS DEBEN SER DEVUELTAS EN EL PROXIMO CARGUE, DE NO SER REGRESADAS SE PASARA UNA CUENTA DE COBRO POR 15000 CADA ESTIBA
+      </p>
+    </div>
+  </div>
+
+  <!-- Segunda copia de la orden en una nueva página -->
+  <div class="order-copy new-page">
+    <!-- Encabezado / Logo / Datos principales -->
+    <div class="header-section">
+      <div class="col-left">
+        <img src="{% static 'path/to/logo.png' %}" alt="Logo" style="max-height:60px;">
+      </div>
+      <div class="col-center">
+        <div class="title">Orden de Cargue</div>
+        <div class="subtitle">Gestion de operaciones y produccion</div>
+      </div>
+      <div class="col-right">
+        <strong>Orden de Cargue N°:</strong> {{ cargo_number }}
+      </div>
+    </div>
+
+    <hr />
+
+    <!-- Tabla de información principal -->
+    <table class="info-table">
+      <tr>
+        <td><strong>Hora Entrada:</strong> {{ entry_time }}</td>
+        <td><strong>Hora Salida:</strong> {{ departure_time }}</td>
+        <td><strong>No. Pedido:</strong> {{ order_code }}</td>
+      </tr>
+      <tr>
+        <td><strong>Cliente:</strong> {{ client_name }}</td>
+        <td><strong>Transportador:</strong> {{ driver }}</td>
+        <td><strong>Cédula Transp.:</strong> {{ driver_identification }}</td>
+      </tr>
+      <tr>
+        <td><strong>Placa Veh.:</strong> {{ plate }}</td>
+        <td><strong>Tipo Vehículo:</strong> {{ vehicle_type }}</td>
+        <td><strong>Contacto:</strong> {{ phone }}</td>
+      </tr>
+      <tr>
+        <td><strong>No. Rótulo:</strong> {{ rotulo_number }}</td>
+        <td><strong>No. Orden Prod.:</strong> {{ production_number }}</td>
+        <td></td>
+      </tr>
+    </table>
+
+    <!-- Sección de productos -->
+    <div class="section-title">Detalle de Productos</div>
+    <table class="products-table">
+      <thead>
+        <tr>
+          <th>Producto</th>
+          <th>Color</th>
+          <th>Cantidad</th>
+          <th>Núm. Estibas</th>
+          <th>Lote</th>
+          <th>Núm. Rótulo</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for product in products %}
+        <tr>
+          <td>{{ product.name }}</td>
+          <td>{{ product.color }}</td>
+          <td>{{ product.cantidad }}</td>
+          <td>{{ product.numero_estibas }}</td>
+          <td>{{ product.lote }}</td>
+          <td>{{ product.numero_rotulo }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <!-- Observaciones -->
+    <div class="observations">
+      <label>Observaciones:</label>
+      <p>{{ observation }}</p>
+    </div>
+
+    <!-- Sección de Firmas -->
+    <table class="firmas-table">
+      <tr>
+        <td class="desc">Autoriza Despacho:</td>
+        <td class="value">{{ dispatcher }}</td>
+        <td class="signature-cell">&nbsp;</td>
+      </tr>
+      <tr>
+        <td class="desc">Encargado de Almacén:</td>
+        <td class="value">{{ warehouseman }}</td>
+        <td class="signature-cell">&nbsp;</td>
+      </tr>
+      <tr>
+        <td class="desc">Recibe a Satisfacción:</td>
+        <td class="value">{{ driver }}</td>
+        <td class="signature-cell">&nbsp;</td>
+      </tr>
+    </table>
+
+    <!-- Notas debajo de las firmas -->
+    <div class="firma-notes">
+      <p>
+        EL TRANSPORTADOR ACEPTA QUE A RECIBIDO LA CANTIDAD DESCRITA EN EL SIGUIENTE DOCUMENTO SIN IMPERFECTOS Y CONDICIONES OPTIMAS PARA SU INSTALACION.
+      </p>
+      <p>
+        LAS ESTIBAS DEBEN SER DEVUELTAS EN EL PROXIMO CARGUE, DE NO SER REGRESADAS SE PASARA UNA CUENTA DE COBRO POR 15000 CADA ESTIBA
+      </p>
+    </div>
+    
+  </div>
+
+</body>
+</html>
