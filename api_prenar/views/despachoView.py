@@ -73,8 +73,8 @@ class DespachoView(APIView):
                         )
                     
                     # Validar la cantidad total acumulada
-                    # Se usa el campo "cantidad" del pedido (antes "cantidad_unidades")
-                    cantidad_disponible = producto_encontrado['cantidad_unidades'] 
+                    # Se usa el campo "cantidad_unidades" para determinar la cantidad solicitada
+                    cantidad_disponible = producto_encontrado['cantidad_unidades']
                     
                     # Sumar la cantidad despachada previamente para este producto
                     despachos_existentes = Despacho.objects.filter(id_pedido=pedido_id)
@@ -95,22 +95,26 @@ class DespachoView(APIView):
                         producto_encontrado['cantidades_despachadas'] = 0
                     producto_encontrado['cantidades_despachadas'] += cantidad_despacho
                 
-                # Verificar si TODOS los productos del pedido están totalmente despachados
+                # Verificar si TODOS los productos del pedido están totalmente despachados:
+                # Es decir, para cada producto, la cantidad solicitada (cantidad) debe ser igual a las cantidades_despachadas.
                 all_fully_dispatched = True
                 for prod in pedido.products:
-                    cantidad_total = prod.get('cantidad', 0)
+                    cantidad_total = prod.get('cantidad_unidades', 0)
                     despachado = prod.get('cantidades_despachadas', 0)
-                    if despachado < cantidad_total:
+                    if despachado != cantidad_total:
                         all_fully_dispatched = False
                         break
-                if all_fully_dispatched:
-                    pedido.state = 2
-                
-                # Guardar los cambios en el pedido
-                pedido.products = pedido.products  # Marca el campo como modificado
+
+                # Asignar el estado del pedido:
+                # - 2 si se despachó exactamente la cantidad solicitada en todos los productos.
+                # - 1 en caso contrario.
+                pedido.state = 2 if all_fully_dispatched else 1
+
+                # Marcar el campo "products" como modificado y guardar el pedido
+                pedido.products = pedido.products
                 pedido.save()
                 
-                # Crear el despacho
+                # Crear y guardar el despacho
                 despacho = serializer.save()
                 return Response(
                     {
@@ -139,48 +143,44 @@ class DespachoView(APIView):
         try:
             # Obtener el despacho por su ID
             despacho = Despacho.objects.get(id=despacho_id)
-
-            # Obtener el producto relacionado
-            producto = despacho.id_producto
-
-            # Obtener el pedido relacionado
             pedido = despacho.id_pedido
 
-            if not producto:
-                return Response(
-                    {"message": "El despacho no tiene un producto relacionado."},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
+            # Para cada producto incluido en el despacho,
+            # se busca el correspondiente en el JSON de productos del pedido
+            for despacho_prod in despacho.products:
+                referencia = despacho_prod.get('referencia')
+                amount_despacho = despacho_prod.get('cantidad', 0)
 
-            producto.save()
+                # Buscar el producto en el JSON del pedido que coincida con la referencia
+                producto_encontrado = None
+                for prod in pedido.products:
+                    if prod.get('referencia') == referencia:
+                        producto_encontrado = prod
+                        break
 
-            # Buscar el producto en el JSON de `products` del pedido
-            producto_encontrado = None
+                if not producto_encontrado:
+                    # Si no se encuentra el producto, se puede optar por continuar o retornar error.
+                    # En este ejemplo se continúa con el siguiente producto.
+                    continue
+
+                # Restar el valor de "amount" del despacho al campo "cantidades_despachadas"
+                if 'cantidades_despachadas' in producto_encontrado:
+                    nuevo_valor = producto_encontrado['cantidades_despachadas'] - amount_despacho
+                    # Evitar valores negativos
+                    producto_encontrado['cantidades_despachadas'] = nuevo_valor if nuevo_valor >= 0 else 0
+
+            # Validar si para todos los productos del pedido se cumple que:
+            # cantidad_unidades <= cantidades_despachadas
+            all_fully_dispatched = True
             for prod in pedido.products:
-                if prod['referencia'] == producto.id:  # Comparar con la referencia correcta
-                    producto_encontrado = prod
+                if prod.get('cantidad_unidades', 0) != prod.get('cantidades_despachadas', 0):
+                    all_fully_dispatched = False
                     break
-            
-            if not producto_encontrado:
-                return Response(
-                    {"message": f"No se encontró el producto con referencia {producto.id} en el pedido."},
-                    status=status.HTTP_404_NOT_FOUND
-                )
 
-            # Restar el valor de `amount` al campo `cantidades_despachadas`
-            if 'cantidades_despachadas' in producto_encontrado:
-                producto_encontrado['cantidades_despachadas'] -= despacho.amount
-                if producto_encontrado['cantidades_despachadas'] < 0:
-                    producto_encontrado['cantidades_despachadas'] = 0  # Evitar valores negativos
-            
-            # Forzar el estado del pedido a 1
-            pedido.state = 1
+            pedido.state = 2 if all_fully_dispatched else 1
 
-            # Guardar los cambios en el JSON y el estado
-            pedido.products = pedido.products
+            # Guardar los cambios del pedido y eliminar el despacho
             pedido.save()
-
-            # Eliminar el despacho
             despacho.delete()
 
             return Response(
