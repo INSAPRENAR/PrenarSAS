@@ -139,6 +139,29 @@ class DespachoView(APIView):
             status=status.HTTP_400_BAD_REQUEST
         )
     
+    def put(self, request, despacho_id):
+        try:
+            despacho = Despacho.objects.get(id=despacho_id)
+        except Despacho.DoesNotExist:
+            return Response(
+                {"message": "Despacho no encontrado."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        serializer = DespachoSerializer(despacho, data=request.data)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                {"message": "Despacho actualizado exitosamente.", "despacho": serializer.data},
+                status=status.HTTP_200_OK
+            )
+        
+        return Response(
+            {"message": "Error al actualizar el despacho.", "errors": serializer.errors},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
     def delete(self, request, despacho_id):
         try:
             # Obtener el despacho por su ID
