@@ -43,3 +43,4 @@ from .reporteResumenPedidosExcel import downloadPedidosResumenView
 from .reporteResumenPagosView import ReporteResumenPagoView
 from .reporteResumenPagosExcelView import downloadResumenPagoView
 from .ordenDespachoPDFView import OrdenCarguePDFView
+from .despachoEspecificoView import DespachoEspecificoView
