@@ -6,8 +6,8 @@ from api_prenar.serializers.pedidoSerializers import ListaNumerosPedidoSerialize
 
 class ListaNumerosPedidosView(APIView):
     def get(self, request):
-        # Obtener todos los pedidos con estado 1
-        pedidos = Pedido.objects.filter(state=1)
+        # Obtener todos los pedidos
+        pedidos = Pedido.objects.all()
 
         # Serializar los pedidos con los campos id y order_code
         serializer = ListaNumerosPedidoSerializer(pedidos, many=True)
