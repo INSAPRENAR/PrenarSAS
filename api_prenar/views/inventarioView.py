@@ -98,30 +98,8 @@ class InventarioView(APIView):
                 # Ajustar warehouse_quantity dependiendo de producción o salida
                 if inventario.total_production > 0:
                     producto.warehouse_quantity -= inventario.total_production
-
-                    # Ajustar el campo control del producto en el pedido
-                    products = pedido.products  # JSON de productos
-                    for prod in products:
-                        if prod.get('referencia') == producto.id:  # Comparar por el campo de referencia
-                            prod['control'] += inventario.total_production
-                            break  # Detener la búsqueda una vez encontrado el producto
-
-                    # Guardar los cambios en el pedido
-                    pedido.products = products
-                    pedido.save()
-
                 elif inventario.total_output > 0:
                     producto.warehouse_quantity += inventario.total_output
-                    despachos_asociados = Despacho.objects.filter(
-                        id_pedido=pedido,
-                        id_producto=producto
-                    ).exists()
-
-                    if despachos_asociados:
-                        return Response(
-                            {"message": "Existe despacho asociado a esta salida. No se puede eliminar el registro de inventario."},
-                            status=status.HTTP_400_BAD_REQUEST
-                        )
 
                 # Validar que warehouse_quantity no sea negativa
                 if producto.warehouse_quantity < 0:
