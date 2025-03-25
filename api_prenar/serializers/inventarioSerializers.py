@@ -9,12 +9,6 @@ class InventarioSerializer(serializers.ModelSerializer):
         max_length=255,
         required=False,
         allow_blank=True,
-        validators=[
-            UniqueValidator(
-                queryset=Inventario.objects.all(),
-                message="El número de orden de cargue ya se encuentra registrado."
-            )
-        ]
     )
     saldo_almacen = serializers.IntegerField(read_only=True)
     total_production = serializers.IntegerField(read_only=True)
