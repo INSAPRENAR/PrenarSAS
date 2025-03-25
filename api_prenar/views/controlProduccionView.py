@@ -3,7 +3,7 @@ from api_prenar.models import Pedido
 from api_prenar.options.utils import get_total_almacen
 
 def control_produccion_agrupado(request):
-    pedidos = Pedido.objects.filter(state=1)
+    pedidos = Pedido.objects.all()
     productos_agrupados = {}
 
     for pedido in pedidos:

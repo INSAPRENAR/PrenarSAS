@@ -15,7 +15,7 @@ class Inventario(models.Model):
     total_production = models.IntegerField(default=0)
     total_output = models.IntegerField(default=0)
     saldo_almacen = models.IntegerField() 
-    cargo_number=models.CharField(unique=True, null=True, blank=True, max_length=255)
+    cargo_number=models.CharField(null=True, blank=True, max_length=255) 
     email_user=models.EmailField()
     registration_date=models.DateField(auto_now_add=True)
 
