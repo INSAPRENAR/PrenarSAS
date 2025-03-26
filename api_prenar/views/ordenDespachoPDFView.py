@@ -53,7 +53,10 @@ class OrdenCarguePDFView(APIView):
             }
 
             html_string = render_to_string("api_prenar/orden_despacho.html", context)
-            pdf_file = HTML(string=html_string).write_pdf()
+            # Construye la URL base, usando el request, para que apunte a la raíz de tu dominio.
+            base_url = request.build_absolute_uri('/')
+            # Pasa base_url a WeasyPrint para que pueda resolver la ruta a la imagen.
+            pdf_file = HTML(string=html_string, base_url=base_url).write_pdf()
 
             response = HttpResponse(pdf_file, content_type='application/pdf')
             response['Content-Disposition'] = 'inline; filename="orden_cargue.pdf"'
