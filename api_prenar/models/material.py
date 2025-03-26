@@ -9,7 +9,7 @@ class Material(models.Model):
     supplier=models.CharField(max_length=255, null=True, blank=True)
     unit_price=models.FloatField()
     date_received=models.DateField(null=True, blank=True)
-    amount=models.IntegerField()
+    amount=models.FloatField()
     extent=models.IntegerField(choices=OPTIONS_MATERIAL_MEDIDA)
     total=models.FloatField(null=True, blank=True)
     email_user=models.EmailField()

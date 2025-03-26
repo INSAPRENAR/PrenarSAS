@@ -19,7 +19,7 @@ class Despacho(models.Model):
     departure_time=models.CharField()
     rotulo_number=models.CharField()
     production_number=models.CharField()
-    observation=models.CharField()
+    observation=models.CharField(null=True, blank=True)
     dispatcher_state=models.IntegerField(choices=OPTIONS_DISPATCH_STATE, default=1)
     email_user=models.EmailField()
     registration_date=models.DateField(auto_now_add=True)
