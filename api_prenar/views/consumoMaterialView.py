@@ -21,6 +21,7 @@ class ConsumoMaterialView(APIView):
                 id_producto=serializer.validated_data.get('id_producto')
                 estimated_base=serializer.validated_data.get('estimated_base_reference_units')
                 estimated_mortar=serializer.validated_data.get('estimated_units_reference_mortar')
+                unit_value = serializer.validated_data.get('unit')
 
                 categoria_material=get_object_or_404(CategoriaMaterial, id=id_categoria.id)
                 producto = get_object_or_404(Producto, id=id_producto.id)
@@ -53,12 +54,15 @@ class ConsumoMaterialView(APIView):
                     unit_X_package_mortar=unit_X_package_mortar,
                     estimated_units_reference_mortar=estimated_mortar,
                     mortar_variation=mortar_variation,
-                    kilos_X_unit_mortar=kilos_X_unit_mortar
+                    kilos_X_unit_mortar=kilos_X_unit_mortar,
+                    unit=unit_value
 
                 )
 
-                categoria_material.stock_quantity -=total
-                categoria_material.save()
+                if unit_value == 1:
+                    categoria_material.stock_quantity -=total
+                    categoria_material.save()
+                    
                 return Response(
                     {"message": "Material registrado y stock actualizado.", "data": ConsumoMaterialSerializer(nuevo_consumo_material).data},
                     status=status.HTTP_201_CREATED
@@ -129,9 +133,11 @@ class ConsumoMaterialView(APIView):
             # Obtener la categoría asociada al material
             categoria_material = consumo_material.id_categoria
 
-            # Restar el total del consumo de material al stock_quantity de la categoría
-            categoria_material.stock_quantity += consumo_material.total
-            categoria_material.save()
+            # Verificar si el campo unit es 1 para actualizar el stock
+            if consumo_material.unit == 1:
+                # Sumar el total del consumo de material al stock_quantity de la categoría
+                categoria_material.stock_quantity += consumo_material.total
+                categoria_material.save()
 
             # Eliminar el consumo del material
             consumo_material.delete()

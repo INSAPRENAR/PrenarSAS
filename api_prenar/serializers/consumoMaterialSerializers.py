@@ -6,6 +6,11 @@ class ConsumoMaterialSerializer(serializers.ModelSerializer):
     id_categoria_name = serializers.SerializerMethodField()
     id_producto_name = serializers.SerializerMethodField()
     id_producto_color = serializers.SerializerMethodField()
+    unit_name = serializers.SerializerMethodField()
+
+    def get_unit_name(self, obj):
+        # Retorna el valor legible del campo 'extent'
+        return obj.get_unit_display()
 
     class Meta:
         model = ConsumoMaterial

@@ -21,7 +21,7 @@ class MaterialView(APIView):
                 categoria_material = get_object_or_404(CategoriaMaterial, id=categoria_id.id)
                 
                 # Calcular el total del material
-                total = amount * unit_price
+                total = unit_price
 
                 # Crear el nuevo material
                 nuevo_material = Material.objects.create(
