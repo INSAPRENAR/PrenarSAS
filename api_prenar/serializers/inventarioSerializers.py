@@ -58,7 +58,7 @@ class InventarioSerializer(serializers.ModelSerializer):
         # se le suma el total de salida que se está intentando registrar y se verifica que no supere la cantidad permitida.
         if total_output > 0:
             total_output_acumulado = (
-                Inventario.objects.filter(id_producto=producto)
+                Inventario.objects.filter(id_producto=producto, id_pedido=pedido)
                 .aggregate(total=Sum('total_output'))['total'] or 0
             )
             total_output_final = total_output_acumulado + total_output
@@ -113,6 +113,7 @@ class InventarioSerializerInventario(serializers.ModelSerializer):
     name = serializers.CharField(source='id_producto.name', read_only=True)
     name_cliente = serializers.CharField(source='id_pedido.id_client.name', read_only=True)
     almacen_producto=serializers.IntegerField(source='id_producto.warehouse_quantity')
+    color_producto=serializers.CharField(source='id_producto.color', read_only=True)
     
     class Meta:
         model = Inventario
@@ -133,6 +134,7 @@ class InventarioSerializerInventario(serializers.ModelSerializer):
             'registration_date',
             'order_code',
             'name',
+            'color_producto',
             'name_cliente',
             'saldo_almacen',
             'almacen_producto'
