@@ -58,6 +58,8 @@ class DespachoView(APIView):
                 # Iterar sobre cada producto a despachar
                 for prod_despacho in productos_despacho:
                     referencia = prod_despacho.get('referencia')
+                    name=prod_despacho.get('name')
+                    color=prod_despacho.get('color')
                     cantidad_despacho = prod_despacho.get('cantidad')
                     
                     # Buscar el producto correspondiente en el JSON del pedido
@@ -86,7 +88,7 @@ class DespachoView(APIView):
                     
                     if cantidad_despachada_total + cantidad_despacho > cantidad_disponible:
                         return Response(
-                            {"message": f"La cantidad solicitada ({cantidad_despacho}) más las cantidades ya despachadas ({cantidad_despachada_total}) exceden las unidades solicitadas ({cantidad_disponible}) para el producto {referencia}."},
+                            {"message": f"La cantidad solicitada ({cantidad_despacho}) más las cantidades ya despachadas ({cantidad_despachada_total}) exceden las unidades solicitadas ({cantidad_disponible}) para el producto {name} {color}."},
                             status=status.HTTP_400_BAD_REQUEST
                         )
                     

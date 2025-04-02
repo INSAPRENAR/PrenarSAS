@@ -30,7 +30,7 @@ class ReporteResumenPagoView(APIView):
                 filters &= Q(id_pedido__order_date__lte=end_date)
 
             # Filtrar los pagos aplicando los filtros y ordenarlos (por ejemplo, por fecha de pago)
-            pagos = Pago.objects.filter(filters)
+            pagos = Pago.objects.filter(filters).order_by('-id')
 
             # Si no se encuentran registros, se retorna un mensaje
             if not pagos.exists():

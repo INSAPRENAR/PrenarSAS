@@ -49,7 +49,7 @@ class InventarioSerializer(serializers.ModelSerializer):
         productos_pedido = pedido.products
         producto_en_pedido = next((p for p in productos_pedido if p['referencia'] == producto.id), None)
         if not producto_en_pedido:
-            raise serializers.ValidationError(f"El producto {producto.id} no está en el pedido {pedido.id}.")
+            raise serializers.ValidationError(f"El producto {producto.name} {producto.color} no está en el pedido {pedido.order_code}.")
 
         cantidad_permitida = producto_en_pedido['cantidad_unidades']
 
@@ -64,7 +64,7 @@ class InventarioSerializer(serializers.ModelSerializer):
             total_output_final = total_output_acumulado + total_output
             if total_output_final > cantidad_permitida:
                 raise serializers.ValidationError(
-                    f"El total de salidas acumuladas para el producto {producto.id} ({total_output_final}) supera la cantidad solicitada del pedido ({cantidad_permitida})."
+                    f"El total de salidas acumuladas para el producto {producto.name} ({total_output_final}) supera la cantidad solicitada del pedido ({cantidad_permitida})."
                 )
 
         return data
