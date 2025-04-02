@@ -43,4 +43,4 @@ class UserDetail(APIView):
         user.delete()
         
         # Respuesta de éxito
-        return Response({"message": "Usuario eliminado correctamente."}, status=status.HTTP_204_NO_CONTENT)
+        return Response({"message": "Usuario eliminado correctamente."}, status=status.HTTP_200_OK)
