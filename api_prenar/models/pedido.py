@@ -5,7 +5,7 @@ from api_prenar.options.option import OPTIONS_COMPANY
 class Pedido(models.Model):
     id=models.AutoField(primary_key=True)
     id_client=models.ForeignKey(Cliente, on_delete=models.CASCADE, related_name='pedidos')
-    order_code=models.CharField(unique=True)
+    order_code=models.CharField(unique=True,max_length=255)
     order_date=models.DateField()
     delivery_date=models.DateField()
     address=models.CharField(max_length=255, null=True, blank=True)

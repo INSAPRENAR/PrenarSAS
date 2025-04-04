@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import Register, loginView, UsersView, LogoutView, ListUserView, UserView, UserDetail, ClientesView, ClienteEspecificoView, PedidoView, PagoView, InventarioView, ProductoView, ProductoEspecificoView, DespachoView, ProductosPedidoDespachoView, ListaNumerosPedidosView, control_produccion_agrupado, InventarioPorProductoView, CalendarioProduccionView, CalendarioEspecificoView, MaterialView, MaterialDetailView, ConsumoMaterialView, CategoriaMaterialDetail, CategoriaMaterialView, PedidoDetailView, ProductosPedidoView, PedidoCountView, ProductosEnPedidosPendientesView, CantidadesTotalesProductosPendientesView, PedidoSaldosPendientesView, PedidoProductosUnidadesSolicitadasView, CalendarioProduccionStateDetalleView, CalendarioDespachoStateDetalleView, ListaProductoView, UpdatePedidoProductControl, control_produccion_agrupado_completados, UpdatePedidoProductControlCompletados, ConsumoMaterialListView, reportePedidosResumenView, downloadPedidosResumenView, ReporteResumenPagoView, downloadResumenPagoView, OrdenCarguePDFView, DespachoEspecificoView
+from .views import Register, loginView, UsersView, LogoutView, ListUserView, UserView, UserDetail, ClientesView, ClienteEspecificoView, PedidoView, PagoView, InventarioView, ProductoView, ProductoEspecificoView, DespachoView, ProductosPedidoDespachoView, ListaNumerosPedidosView, control_produccion_agrupado, InventarioPorProductoView, CalendarioProduccionView, CalendarioEspecificoView, MaterialView, MaterialDetailView, ConsumoMaterialView, CategoriaMaterialDetail, CategoriaMaterialView, PedidoDetailView, ProductosPedidoView, PedidoCountView, ProductosEnPedidosPendientesView, CantidadesTotalesProductosPendientesView, PedidoSaldosPendientesView, PedidoProductosUnidadesSolicitadasView, CalendarioProduccionStateDetalleView, CalendarioDespachoStateDetalleView, ListaProductoView, UpdatePedidoProductControl, control_produccion_agrupado_completados, UpdatePedidoProductControlCompletados, ConsumoMaterialListView, reportePedidosResumenView, downloadPedidosResumenView, ReporteResumenPagoView, downloadResumenPagoView, OrdenCarguePDFView, DespachoEspecificoView, GeneracionPasswordView
 
 urlpatterns = [
     path('register', Register.as_view(), name='register'),
@@ -73,4 +73,8 @@ urlpatterns = [
     path('orden/despacho/<int:despacho_id>/pdf/download/', OrdenCarguePDFView.as_view(), name='orden-despacho-pdf-download'),
     path('despacho/<int:despacho_id>/detail', DespachoEspecificoView.as_view(), name='despacho-detail'),
     path('despacho/<int:despacho_id>/update', DespachoView.as_view(), name='despacho-update'),
+    path('generacion/password/register', GeneracionPasswordView.as_view(), name='generacion-password-register'),
+    path('generacion/password/list', GeneracionPasswordView.as_view(), name='generacion-password-list'),
+    path('generacion/password/<int:generacion_id>/update', GeneracionPasswordView.as_view(), name='generacion-password-update'),
+    path('generacion/password/<int:generacion_id>/delete', GeneracionPasswordView.as_view(), name='generacion-password-delete'),
 ]
