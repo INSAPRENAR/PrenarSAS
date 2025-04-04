@@ -2,9 +2,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from api_prenar.serializers.inventarioSerializers import InventarioSerializer
-from api_prenar.models import Inventario, Despacho
+from api_prenar.models import Inventario, GeneracionPassword
 from django.db import transaction
-from django.conf import settings
 
 class InventarioView(APIView):
 
@@ -72,9 +71,16 @@ class InventarioView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        # Verificar la contraseña proporcionada
-        expected_password = settings.INVENTORY_DELETE_PASSWORD
-        if password != expected_password:
+        # Obtener la instancia de GeneracionPassword para comparar
+        generacion = GeneracionPassword.objects.first()
+        if not generacion:
+            return Response(
+                {"message": "La contraseña generada no está configurada en el sistema."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        
+        # Verificar la contraseña proporcionada con la del modelo
+        if password != generacion.password_generation:
             return Response(
                 {"message": "Contraseña incorrecta."},
                 status=status.HTTP_403_FORBIDDEN
