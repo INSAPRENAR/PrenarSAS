@@ -7,7 +7,7 @@ class Inventario(models.Model):
     inventory_date=models.DateField()
     id_producto = models.ForeignKey(Producto, on_delete=models.CASCADE, related_name='inventarios')
     id_pedido= models.ForeignKey(Pedido, on_delete=models.CASCADE, related_name='inventarios')
-    number_upload=models.CharField(null=True, blank=True)
+    number_upload=models.CharField(max_length=255,null=True, blank=True)
     conformal_production = models.IntegerField(default=0)
     not_comformal_production = models.IntegerField(default=0)
     comformal_output = models.IntegerField(default=0)

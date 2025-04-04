@@ -2,7 +2,7 @@ from django.db import models
 
 class Producto(models.Model):
     id=models.AutoField(primary_key=True)
-    product_code=models.CharField(unique=True)
+    product_code=models.CharField(unique=True, max_length=255)
     name=models.CharField(max_length=255)
     description=models.CharField(max_length=255, null=True, blank=True)
     unit_price=models.FloatField()
