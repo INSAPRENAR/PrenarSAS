@@ -128,6 +128,7 @@ class InventarioSerializerInventario(serializers.ModelSerializer):
             'not_comformal_output',
             'total_production',
             'total_output',
+            'observation',
             'email_user',
             'registration_date',
             'order_code',
