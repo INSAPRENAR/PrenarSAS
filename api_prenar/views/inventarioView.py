@@ -92,13 +92,6 @@ class InventarioView(APIView):
 
             # Verificar si hay un producto y pedido relacionados
             producto = inventario.id_producto
-            pedido = inventario.id_pedido
-
-            if not producto or not pedido:
-                return Response(
-                    {"message": "El inventario no está relacionado con un producto o pedido válido."},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
 
             with transaction.atomic():
                 # Ajustar warehouse_quantity dependiendo de producción o salida
