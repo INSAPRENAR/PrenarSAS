@@ -71,8 +71,17 @@ class PedidoSerializer(serializers.ModelSerializer):
         return products
 
     def create(self, validated_data):
-        # Recupera el total general calculado
-        validated_data['total'] = self.context.get('total_general', 0)
+        # Recupera el total general calculado en validate_products
+        total_general = self.context.get('total_general', 0)
+        # Obtiene el porcentaje de descuento ordenado (total_discount_ordered)
+        descuento = validated_data.get('total_discount_ordered', 0)
+        if descuento and descuento > 0:
+            # Calcula el total aplicando el descuento porcentual
+            total_general = total_general - (total_general * (descuento / 100))
+        
+        validated_data['total'] = total_general
+        # Además, asigna el mismo valor al campo 'outstanding_balance'
+        validated_data['outstanding_balance'] = total_general
         return super().create(validated_data)
     
     def validate_order_code(self, value):

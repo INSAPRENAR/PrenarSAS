@@ -26,6 +26,7 @@ class ReportePedidosResumenSerializer(serializers.ModelSerializer):
     
     def get_products(self, obj):
         products = obj.products  # Extraemos la lista de productos del JSONField
+        overall_discount = obj.total_discount_ordered or 0
         for product in products:
             cantidad_unidades = product.get("cantidad_unidades", 0)
             cantidades_despachadas = product.get("cantidades_despachadas", 0)
@@ -53,6 +54,10 @@ class ReportePedidosResumenSerializer(serializers.ModelSerializer):
                 descuento_total = product.get("descuento_total", 0)
                 if descuento_total > 0:
                     total_price -= total_price * (descuento_total / 100)
+                
+                # Aplica además el descuento global total_discount_ordered si es mayor a 0
+                if overall_discount > 0:
+                    total_price -= total_price * (overall_discount / 100)
 
                 product["valor_unidades_pendientes"] = total_price
         return products
