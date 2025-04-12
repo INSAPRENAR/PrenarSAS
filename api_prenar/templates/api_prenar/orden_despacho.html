@@ -6,7 +6,7 @@
   <title>Orden de Cargue</title>
   <style>
     body {
-      font-family: "Arial", sans-serif;
+      font-family: Arial, sans-serif;
       font-size: 10px;
       margin: 20px;
       color: #000;
@@ -15,44 +15,30 @@
     .order-copy {
       margin-bottom: 20px;
     }
-    /* Fuerza salto de página antes del elemento */
+    /* Salto de página */
     .new-page {
       page-break-before: always;
     }
-    /* Línea separadora entre copias (si se desea, aunque ya no se use si hay salto de página) */
-    .separator {
-      border-top: 2px dashed #000;
-      margin: 5px 0;
-    }
-    /* Encabezado */
-    .header-section {
-      display: flex;
-      justify-content: space-between;
-      align-items: stretch;
+    /* Encabezado adaptado para xhtml2pdf */
+    .header-table {
+      width: 100%;
+      border: 1px solid #000;
+      border-collapse: collapse;
       margin-bottom: 5px;
     }
-    .header-section > div {
+    .header-table td {
       border: 1px solid #000;
       padding: 5px;
-      flex: 1;
+      vertical-align: middle;
     }
-    .col-left {
-      text-align: left;
-    }
-    .col-center {
-      text-align: center;
-    }
-    .col-right {
-      text-align: center;
-    }
-    .col-center .title {
+    .title {
       font-size: 12px;
       font-weight: bold;
       padding-bottom: 5px;
       margin-bottom: 10px;
       border-bottom: 1px solid #000;
     }
-    .col-center .subtitle {
+    .subtitle {
       font-size: 11px;
       margin-top: 10px;
     }
@@ -61,22 +47,18 @@
       border: none;
       border-top: 1px solid #000;
     }
-    /* Tabla de información principal */
+    /* Resto del CSS (tablas, observaciones, firmas) se puede mantener */
     .info-table {
       width: 100%;
       border-collapse: collapse;
       margin-bottom: 5px;
     }
     .info-table td {
-      padding: 6px 4px;
+      padding-top: 5px;
+      padding-bottom: 5px;
       vertical-align: top;
       border: 1px solid #000;
     }
-    .info-table td strong {
-      width: 120px;
-      display: inline-block;
-    }
-    /* Sección de productos */
     .section-title {
       font-weight: bold;
       font-size: 14px;
@@ -90,45 +72,45 @@
     }
     .products-table th,
     .products-table td {
-      border: 1px solid #000;
       padding: 5px;
+      border: 1px solid #000;
       text-align: left;
     }
     .products-table th {
       background-color: #f0f0f0;
     }
-    /* Observaciones */
-    .observations {
-      margin-top: 5px;
-      border: 1px solid #000;
-      padding: 8px;
-      min-height: 5px;
-    }
-    .observations label {
-      font-weight: bold;
-    }
-    /* Tabla de firmas */
-    .firmas-table {
+    .observations-table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 15px;
-      table-layout: fixed;
+      margin-top: 5px;
     }
-    .firmas-table td {
+
+    .title-observation {
+      text-align: center;
+      font-size: larger;
+    }
+
+    .observations-table td {
+      padding: 5px;        /* Ajusta el padding según necesites */
       border: 1px solid #000;
-      padding: 10px;
-      vertical-align: middle;
-      width: 23.33%;
     }
-    /* Notas debajo de las firmas */
+    .firmas-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+    table-layout: fixed;
+  }
+  .firmas-table td {
+    border: 1px solid #000;
+    padding: 5px;
+    vertical-align: middle;
+    width: 50%; /* Se cambia de 33% a 50% */
+  }
     .firma-notes {
       font-size: 8px;
       text-align: center;
       margin-top: 10px;
       padding: 5px;
-    }
-    .firma-notes p {
-      margin: 5px 0;
     }
   </style>
 </head>
@@ -136,19 +118,21 @@
 
   <!-- Primera copia de la orden -->
   <div class="order-copy">
-    <!-- Encabezado / Logo / Datos principales -->
-    <div class="header-section">
-      <div class="col-left">
-        <img src="{% static 'api_prenar/logo_insa.jpeg' %}" alt="Logo" style="max-height:39px;">
-      </div>
-      <div class="col-center">
-        <div class="title">Orden de Cargue</div>
-        <div class="subtitle">Gestion de operaciones y produccion</div>
-      </div>
-      <div class="col-right">
-        <strong>Orden de Cargue N°:</strong> {{ cargo_number }}
-      </div>
-    </div>
+    <!-- Encabezado / Logo / Datos principales usando tabla -->
+    <table class="header-table">
+      <tr>
+        <td style="width: 33%; text-align: left;">
+          <img src="data:image/jpeg;base64,{{ logo_base64 }}" alt="Logo" style="width:190px;">
+        </td>
+        <td style="width: 34%; text-align: center;">
+          <div class="title">Orden de Cargue</div>
+          <div class="subtitle">Gestion de operaciones y produccion</div>
+        </td>
+        <td style="width: 33%; text-align: center;">
+          <strong>Orden de Cargue N°:</strong> {{ cargo_number }}
+        </td>
+      </tr>
+    </table>
 
     <!-- Tabla de información principal -->
     <table class="info-table">
@@ -202,58 +186,59 @@
     </table>
 
     <!-- Observaciones -->
-    <div class="observations">
-      <label>Observaciones:</label>
-      <p>{{ observation }}</p>
-    </div>
+    <table class="observations-table">
+      <tr>
+        <td class="title-observation"><strong>Observaciones</strong></td>
+      </tr>
+      <tr>
+        <td>{{ observation }}</td>
+      </tr>
+    </table>
 
     <!-- Sección de Firmas -->
     <table class="firmas-table">
       <tr>
-        <td class="desc">Autoriza Despacho:</td>
-        <td class="value">{{ dispatcher }}</td>
-        <td class="signature-cell">&nbsp;</td>
+        <td><strong>Autoriza Despacho:</strong></td>
+        <td></td>
       </tr>
       <tr>
-        <td class="desc">Encargado de Almacén:</td>
-        <td class="value">{{ warehouseman }}</td>
-        <td class="signature-cell">&nbsp;</td>
+        <td><strong>Encargado de Almacén:</strong></td>
+        <td></td>
       </tr>
       <tr>
-        <td class="desc">Recibe a Satisfacción:</td>
-        <td class="value">{{ driver }}</td>
-        <td class="signature-cell">&nbsp;</td>
+        <td><strong>Recibe a Satisfacción:</strong></td>
+        <td></td>
       </tr>
     </table>
 
     <!-- Notas debajo de las firmas -->
     <div class="firma-notes">
       <p>
-        EL TRANSPORTADOR ACEPTA QUE A RECIBIDO LA CANTIDAD DESCRITA EN EL SIGUIENTE DOCUMENTO SIN IMPERFECTOS Y CONDICIONES OPTIMAS PARA SU INSTALACION.
+        EL TRANSPORTADOR ACEPTA QUE HA RECIBIDO LA CANTIDAD DESCRITA EN EL SIGUIENTE DOCUMENTO SIN IMPERFECTOS Y CONDICIONES ÓPTIMAS PARA SU INSTALACION.
       </p>
       <p>
-        LAS ESTIBAS DEBEN SER DEVUELTAS EN EL PROXIMO CARGUE, DE NO SER REGRESADAS SE PASARA UNA CUENTA DE COBRO POR 15000 CADA ESTIBA
+        LAS ESTIBAS DEBEN SER DEVUELTAS EN EL PRÓXIMO CARGUE, DE NO SER REGRESADAS SE PASARÁ UNA CUENTA DE COBRO POR 15000 CADA ESTIBA.
       </p>
     </div>
   </div>
 
   <!-- Segunda copia de la orden en una nueva página -->
   <div class="order-copy new-page">
-    <!-- Encabezado / Logo / Datos principales -->
-    <div class="header-section">
-      <div class="col-left">
-        <img src="{% static 'api_prenar/logo_insa.jpeg' %}" alt="Logo" style="max-height:39px;">
-      </div>
-      <div class="col-center">
-        <div class="title">Orden de Cargue</div>
-        <div class="subtitle">Gestion de operaciones y produccion</div>
-      </div>
-      <div class="col-right">
-        <strong>Orden de Cargue N°:</strong> {{ cargo_number }}
-      </div>
-    </div>
-
-    <hr />
+    <!-- Encabezado / Logo / Datos principales usando tabla -->
+    <table class="header-table">
+      <tr>
+        <td style="width: 33%; text-align: left;">
+          <img src="data:image/jpeg;base64,{{ logo_base64 }}" alt="Logo" style="width:190px;">
+        </td>
+        <td style="width: 34%; text-align: center;">
+          <div class="title">Orden de Cargue</div>
+          <div class="subtitle">Gestion de operaciones y produccion</div>
+        </td>
+        <td style="width: 33%; text-align: center;">
+          <strong>Orden de Cargue N°:</strong> {{ cargo_number }}
+        </td>
+      </tr>
+    </table>
 
     <!-- Tabla de información principal -->
     <table class="info-table">
@@ -307,40 +292,40 @@
     </table>
 
     <!-- Observaciones -->
-    <div class="observations">
-      <label>Observaciones:</label>
-      <p>{{ observation }}</p>
-    </div>
+    <table class="observations-table">
+      <tr>
+        <td class="title-observation"><strong>Observaciones</strong></td>
+      </tr>
+      <tr>
+        <td>{{ observation }}</td>
+      </tr>
+    </table>
 
     <!-- Sección de Firmas -->
     <table class="firmas-table">
       <tr>
-        <td class="desc">Autoriza Despacho:</td>
-        <td class="value">{{ dispatcher }}</td>
-        <td class="signature-cell">&nbsp;</td>
+        <td><strong>Autoriza Despacho:</strong></td>
+        <td></td>
       </tr>
       <tr>
-        <td class="desc">Encargado de Almacén:</td>
-        <td class="value">{{ warehouseman }}</td>
-        <td class="signature-cell">&nbsp;</td>
+        <td><strong>Encargado de Almacén:</strong></td>
+        <td></td>
       </tr>
       <tr>
-        <td class="desc">Recibe a Satisfacción:</td>
-        <td class="value">{{ driver }}</td>
-        <td class="signature-cell">&nbsp;</td>
+        <td><strong>Recibe a Satisfacción:</strong></td>
+        <td></td>
       </tr>
     </table>
 
     <!-- Notas debajo de las firmas -->
     <div class="firma-notes">
       <p>
-        EL TRANSPORTADOR ACEPTA QUE A RECIBIDO LA CANTIDAD DESCRITA EN EL SIGUIENTE DOCUMENTO SIN IMPERFECTOS Y CONDICIONES OPTIMAS PARA SU INSTALACION.
+        EL TRANSPORTADOR ACEPTA QUE HA RECIBIDO LA CANTIDAD DESCRITA EN EL SIGUIENTE DOCUMENTO SIN IMPERFECTOS Y CONDICIONES ÓPTIMAS PARA SU INSTALACION.
       </p>
       <p>
-        LAS ESTIBAS DEBEN SER DEVUELTAS EN EL PROXIMO CARGUE, DE NO SER REGRESADAS SE PASARA UNA CUENTA DE COBRO POR 15000 CADA ESTIBA
+        LAS ESTIBAS DEBEN SER DEVUELTAS EN EL PRÓXIMO CARGUE, DE NO SER REGRESADAS SE PASARÁ UNA CUENTA DE COBRO POR 15000 CADA ESTIBA.
       </p>
     </div>
-    
   </div>
 
 </body>
