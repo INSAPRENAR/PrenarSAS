@@ -124,8 +124,6 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
-# STATIC_URL = 'static/'
-STATIC_URL = '/static/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
@@ -155,3 +153,22 @@ SIMPLE_JWT = {
     'BLACKLIST_AFTER_ROTATION': True,               # Opcional: Blacklist los tokens rotados
     'UPDATE_LAST_LOGIN': False,                     # Opcional: Actualiza el campo `last_login` al refrescar token
 }
+
+STATICFILES_FINDERS = [
+    'django.contrib.staticfiles.finders.FileSystemFinder',
+    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
+]
+
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+]
+
+# STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+
+# Definir la ruta absoluta donde se recopilarán los archivos estáticos
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# Si manejas medios (archivos subidos por el usuario), define:
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'mediafiles'
