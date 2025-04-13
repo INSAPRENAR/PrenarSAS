@@ -55,3 +55,13 @@ MATERIAL_CONSUMPTION_UNIT=(
 (1, 'Bultos'),
 (2, 'Kilogramos'),
 )
+
+CATEGORIE=(
+    (1, 'Entrada'),
+    (2, 'Salida'),
+)
+
+INVENTORY_TYPE=(
+    (1, 'Conforme'),
+    (2, 'No Conforme'),
+)

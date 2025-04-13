@@ -14,6 +14,8 @@ class ProductoSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("El precio unitario debe ser mayor a 0.")
         if data.get('discounted_unit_price', 0) < 0:
             raise serializers.ValidationError("El precio con descuento no puede ser negativo.")
-        if data.get('warehouse_quantity', 0) < 0:
+        if data.get('warehouse_quantity_conforme', 0) < 0:
+            raise serializers.ValidationError("La cantidad en el almacén no puede ser negativa.")
+        if data.get('warehouse_quantity_not_conforme', 0) < 0:
             raise serializers.ValidationError("La cantidad en el almacén no puede ser negativa.")
         return data

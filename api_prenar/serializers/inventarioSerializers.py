@@ -23,13 +23,8 @@ class InventarioSerializer(serializers.ModelSerializer):
         Validación para que las cantidades despachadas no superen las solicitadas.
         """
         # Calcular totales de producción y salida
-        conformal_production = data.get('conformal_production', 0)
-        not_conformal_production = data.get('not_conformal_production', 0)
-        total_production = conformal_production + not_conformal_production
-
-        conformal_output = data.get('comformal_output', 0)
-        not_conformal_output = data.get('not_conformal_output', 0)
-        total_output = conformal_output + not_conformal_output
+        production = data.get('production', 0)
+        output = data.get('output', 0)
 
         # Obtener el producto (obligatorio)
         producto = data.get('id_producto')
@@ -42,7 +37,7 @@ class InventarioSerializer(serializers.ModelSerializer):
         # Si se proporciona un pedido, se realizan las validaciones adicionales
         if pedido is not None:
             # No se permite registrar producción y salida simultáneamente
-            if total_production > 0 and total_output > 0:
+            if production > 0 and output > 0:
                 raise serializers.ValidationError("No se puede registrar producción y salida al mismo tiempo.")
 
             # Validar que el producto esté en el pedido
@@ -57,12 +52,12 @@ class InventarioSerializer(serializers.ModelSerializer):
             cantidad_permitida = producto_en_pedido['cantidad_unidades']
 
             # Validación para salidas: verificar que la suma acumulada de salidas no supere la cantidad permitida
-            if total_output > 0:
+            if output > 0:
                 total_output_acumulado = (
                     Inventario.objects.filter(id_producto=producto, id_pedido=pedido)
-                    .aggregate(total=Sum('total_output'))['total'] or 0
+                    .aggregate(total=Sum('output'))['total'] or 0
                 )
-                total_output_final = total_output_acumulado + total_output
+                total_output_final = total_output_acumulado + output
                 if total_output_final > cantidad_permitida:
                     raise serializers.ValidationError(
                         f"El total de salidas acumuladas para el producto {producto.name} ({total_output_final}) supera la cantidad solicitada del pedido ({cantidad_permitida})."
@@ -72,35 +67,56 @@ class InventarioSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         """
-        Cálculo y actualización de los totales y saldo, actualizando también el stock (warehouse_quantity) del producto.
+        Se actualizan las cantidades en almacén dependiendo del tipo de inventario:
+         - Si inventory_type es 1 se suma/resta a warehouse_quantity_conforme.
+         - Si inventory_type es 2 se suma/resta a warehouse_quantity_not_conforme.
+        Además, se actualiza el saldo_almacen del registro inventario.
         """
         with transaction.atomic():
-            conformal_production = validated_data.get('conformal_production', 0)
-            not_conformal_production = validated_data.get('not_conformal_production', 0)
-            total_production = conformal_production + not_conformal_production
+            # Obtenemos las cantidades indicadas en la data, por ejemplo desde el request.
+            production = validated_data.get('production', 0)
+            output = validated_data.get('output', 0)
+            
+            # Se asignan a los campos del modelo (production y output) del inventario.
+            validated_data['production'] = production
+            validated_data['output'] = output
 
-            conformal_output = validated_data.get('comformal_output', 0)
-            not_conformal_output = validated_data.get('not_conformal_output', 0)
-            total_output = conformal_output + not_conformal_output
-
-            validated_data['total_production'] = total_production
-            validated_data['total_output'] = total_output
-
+            # Obtenemos el producto y el tipo de inventario
             producto = validated_data.get('id_producto')
+            inventory_type = validated_data.get('inventory_type')
 
             if producto:
-                # Sumar producción al stock
-                if total_production > 0:
-                    producto.warehouse_quantity += total_production
-                # Restar salidas del stock
-                if total_output > 0:
-                    if producto.warehouse_quantity < total_output:
-                        raise serializers.ValidationError(
-                            f"La cantidad en almacén del producto {producto.name} ({producto.warehouse_quantity}) es insuficiente para despachar {total_output} unidades."
-                        )
-                    producto.warehouse_quantity -= total_output
+                if inventory_type == 1:
+                    # Producción: se suma al stock conforme
+                    if production > 0:
+                        producto.warehouse_quantity_conforme += production
+                    # Salida: se resta del stock conforme con validación
+                    if output > 0:
+                        if producto.warehouse_quantity_conforme < output:
+                            raise serializers.ValidationError(
+                                f"La cantidad en almacén del producto {producto.name} ({producto.warehouse_quantity_conforme}) es insuficiente para despachar {output} unidades."
+                            )
+                        producto.warehouse_quantity_conforme -= output
+                    # Se guarda el saldo en el inventario según la cantidad conforme actualizada
+                    validated_data['saldo_almacen'] = producto.warehouse_quantity_conforme
+                elif inventory_type == 2:
+                    # Producción: se suma al stock NO conforme
+                    if production > 0:
+                        producto.warehouse_quantity_not_conforme += production
+                    # Salida: se resta del stock NO conforme con validación
+                    if output > 0:
+                        if producto.warehouse_quantity_not_conforme < output:
+                            raise serializers.ValidationError(
+                                f"La cantidad en almacén del producto {producto.name} ({producto.warehouse_quantity_not_conforme}) es insuficiente para despachar {output} unidades."
+                            )
+                        producto.warehouse_quantity_not_conforme -= output
+                    # Se guarda el saldo en el inventario según la cantidad no conforme actualizada
+                    validated_data['saldo_almacen'] = producto.warehouse_quantity_not_conforme
+                else:
+                    raise serializers.ValidationError("El tipo de inventario no es válido.")
+
+                # Se guarda la instancia del producto con los nuevos valores actualizados.
                 producto.save()
-                validated_data['saldo_almacen'] = producto.warehouse_quantity
 
             inventario = super().create(validated_data)
             return inventario
@@ -110,8 +126,9 @@ class InventarioSerializerInventario(serializers.ModelSerializer):
     order_code = serializers.CharField(source='id_pedido.order_code', read_only=True)
     name = serializers.CharField(source='id_producto.name', read_only=True)
     name_cliente = serializers.CharField(source='id_pedido.id_client.name', read_only=True)
-    almacen_producto=serializers.IntegerField(source='id_producto.warehouse_quantity')
+    almacen_producto=serializers.IntegerField(source='id_producto.warehouse_quantity_conforme')
     color_producto=serializers.CharField(source='id_producto.color', read_only=True)
+    inventory_type_display = serializers.SerializerMethodField()
     
     class Meta:
         model = Inventario
@@ -121,13 +138,13 @@ class InventarioSerializerInventario(serializers.ModelSerializer):
             'inventory_date',
             'id_producto',
             'id_pedido',
-            'number_upload',
-            'conformal_production',
-            'not_comformal_production',
-            'comformal_output',
-            'not_comformal_output',
-            'total_production',
-            'total_output',
+            'production',
+            'output',
+            'inventory_type',
+            'categori',
+            'lote',
+            'production_order',
+            'transporter_name',
             'observation',
             'email_user',
             'registration_date',
@@ -136,5 +153,48 @@ class InventarioSerializerInventario(serializers.ModelSerializer):
             'color_producto',
             'name_cliente',
             'saldo_almacen',
+            'inventory_type_display',
             'almacen_producto'
         ]
+    def get_inventory_type_display(self, obj):
+        # Django automáticamente genera el método get_FIELD_display() para campos con choices.
+        return obj.get_inventory_type_display()
+
+class InventarioSerializerInventarioDos(serializers.ModelSerializer):
+    # Campo adicional para mostrar el order_code del pedido
+    order_code = serializers.CharField(source='id_pedido.order_code', read_only=True)
+    name = serializers.CharField(source='id_producto.name', read_only=True)
+    name_cliente = serializers.CharField(source='id_pedido.id_client.name', read_only=True)
+    almacen_producto=serializers.IntegerField(source='id_producto.warehouse_quantity_not_conforme')
+    color_producto=serializers.CharField(source='id_producto.color', read_only=True)
+    inventory_type_display = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Inventario
+        # Listamos todos los campos del modelo Inventario y sumamos el campo order_code
+        fields = [
+            'id',
+            'inventory_date',
+            'id_producto',
+            'id_pedido',
+            'production',
+            'output',
+            'inventory_type',
+            'categori',
+            'lote',
+            'production_order',
+            'transporter_name',
+            'observation',
+            'email_user',
+            'registration_date',
+            'order_code',
+            'name',
+            'color_producto',
+            'name_cliente',
+            'saldo_almacen',
+            'inventory_type_display',
+            'almacen_producto'
+        ]
+    def get_inventory_type_display(self, obj):
+        # Django automáticamente genera el método get_FIELD_display() para campos con choices.
+        return obj.get_inventory_type_display()

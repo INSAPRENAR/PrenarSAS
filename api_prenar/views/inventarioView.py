@@ -89,27 +89,46 @@ class InventarioView(APIView):
         try:
             # Buscar el registro de inventario
             inventario = Inventario.objects.get(id=inventario_id)
-
-            # Verificar si hay un producto y pedido relacionados
+            # Obtener el producto relacionado
             producto = inventario.id_producto
 
             with transaction.atomic():
-                # Ajustar warehouse_quantity dependiendo de producción o salida
-                if inventario.total_production > 0:
-                    producto.warehouse_quantity -= inventario.total_production
-                elif inventario.total_output > 0:
-                    producto.warehouse_quantity += inventario.total_output
+                # Verificar el tipo de inventario y ajustar el stock correspondiente
+                if inventario.inventory_type == 1:
+                    # Para inventario conforme:
+                    if inventario.production > 0:
+                        producto.warehouse_quantity_conforme -= inventario.production
+                    elif inventario.output > 0:
+                        producto.warehouse_quantity_conforme += inventario.output
 
-                # Validar que warehouse_quantity no sea negativa
-                if producto.warehouse_quantity < 0:
+                    # Validar que la cantidad no sea negativa
+                    if producto.warehouse_quantity_conforme < 0:
+                        return Response(
+                            {"message": f"La cantidad en almacén del producto {producto.name} no puede ser negativa."},
+                            status=status.HTTP_400_BAD_REQUEST
+                        )
+                
+                elif inventario.inventory_type == 2:
+                    # Para inventario no conforme:
+                    if inventario.production > 0:
+                        producto.warehouse_quantity_not_conforme -= inventario.production
+                    elif inventario.output > 0:
+                        producto.warehouse_quantity_not_conforme += inventario.output
+
+                    # Validar que la cantidad no sea negativa
+                    if producto.warehouse_quantity_not_conforme < 0:
+                        return Response(
+                            {"message": f"La cantidad en almacén del producto {producto.name} no puede ser negativa."},
+                            status=status.HTTP_400_BAD_REQUEST
+                        )
+                else:
                     return Response(
-                        {"message": f"La cantidad en almacén del producto {producto.name} no puede ser negativa."},
+                        {"message": "El tipo de inventario no es válido."},
                         status=status.HTTP_400_BAD_REQUEST
                     )
 
                 # Guardar los cambios en el producto
                 producto.save()
-
                 # Eliminar el registro de inventario
                 inventario.delete()
 
