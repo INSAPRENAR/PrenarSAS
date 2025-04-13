@@ -154,21 +154,5 @@ SIMPLE_JWT = {
     'UPDATE_LAST_LOGIN': False,                     # Opcional: Actualiza el campo `last_login` al refrescar token
 }
 
-STATICFILES_FINDERS = [
-    'django.contrib.staticfiles.finders.FileSystemFinder',
-    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
-]
-
-STATICFILES_DIRS = [
-    BASE_DIR / "static",
-]
-
 # STATIC_URL = 'static/'
 STATIC_URL = '/static/'
-
-# Definir la ruta absoluta donde se recopilarán los archivos estáticos
-STATIC_ROOT = BASE_DIR / 'staticfiles'
-
-# Si manejas medios (archivos subidos por el usuario), define:
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'mediafiles'
