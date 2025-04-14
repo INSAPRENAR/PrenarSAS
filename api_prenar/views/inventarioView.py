@@ -9,7 +9,7 @@ class InventarioView(APIView):
 
     def get(self, request):
         try:
-            print("Ejecutando método GET")
+            
             inventarios = Inventario.objects.all().order_by("id_producto")
             agrupado_por_producto = {}
 
