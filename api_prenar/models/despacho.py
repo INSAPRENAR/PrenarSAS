@@ -17,7 +17,6 @@ class Despacho(models.Model):
     warehouseman=models.CharField(max_length=255)
     entry_time=models.CharField(max_length=255)
     departure_time=models.CharField(max_length=255)
-    rotulo_number=models.CharField(max_length=255,null=True, blank=True)
     production_number=models.CharField(max_length=255,null=True, blank=True)
     observation=models.CharField(max_length=255,null=True, blank=True)
     dispatcher_state=models.IntegerField(choices=OPTIONS_DISPATCH_STATE, default=1)
