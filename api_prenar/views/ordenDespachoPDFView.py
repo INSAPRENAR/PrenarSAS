@@ -56,7 +56,6 @@ class OrdenCarguePDFView(APIView):
                 "entry_time": despacho.entry_time,
                 "departure_time": despacho.departure_time,
                 "production_number": despacho.production_number,
-                "rotulo_number": despacho.rotulo_number,
                 "order_code": order_code,
                 "client_name": client_name,
                 "driver": despacho.driver,
