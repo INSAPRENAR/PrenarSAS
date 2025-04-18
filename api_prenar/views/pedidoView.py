@@ -1,11 +1,12 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from api_prenar.serializers.pedidoSerializers import PedidoSerializer
+from api_prenar.serializers.pedidoSerializers import PedidoSerializer, PedidoDetailSerializer
 from api_prenar.models import Cliente, Pedido, Inventario, Calendario, Despacho, Pago
 from django.db import transaction
 from rest_framework.pagination import PageNumberPagination
 from django.db.models import Q
+from django.db.models import Sum
 
 class PedidoView(APIView):
 
@@ -83,23 +84,36 @@ class PedidoView(APIView):
         )
     
     def put(self, request, pedido_id):
-
         try:
-            pedido=Pedido.objects.get(id=pedido_id)
+            pedido = Pedido.objects.get(id=pedido_id)
         except Pedido.DoesNotExist:
             return Response(
-                {"message":"Pedido no encontrado"},
+                {"message": "Pedido no encontrado"},
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        serializer=PedidoSerializer(pedido, data=request.data)
+        # Serializa el pedido con los nuevos datos
+        serializer = PedidoDetailSerializer(pedido, data=request.data)
+        
         if serializer.is_valid():
-            serializer.save()
+            # Guarda los cambios en el pedido
+            updated_pedido = serializer.save()
+
+            # Aquí es importante actualizar el campo `outstanding_balance` directamente
+            total_calculado = 0.0
+            total_pagado = Pago.objects.filter(id_pedido=pedido.id).aggregate(Sum('amount'))['amount__sum'] or 0.0
+            
+            # Calculamos el nuevo saldo pendiente
+            total_calculado = updated_pedido.total - total_pagado
+            updated_pedido.outstanding_balance = total_calculado
+            updated_pedido.save()  # Guardamos el pedido con el nuevo saldo pendiente
+
             return Response(
-                {"message":"Pedido actualizado exitosamente", "Pedido":serializer.data},
+                {"message": "Pedido actualizado exitosamente", "Pedido": serializer.data},
                 status=status.HTTP_200_OK
             )
-        
+
+        # Si hay un error de validación, retornamos los errores
         return Response(
             {"message": "Error al actualizar el pedido.", "errors": serializer.errors},
             status=status.HTTP_400_BAD_REQUEST

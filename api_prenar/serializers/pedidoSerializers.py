@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from api_prenar.models import Pedido
+from api_prenar.models import Pedido, Pago
+from django.db.models import Sum
 
 class PedidoSerializer(serializers.ModelSerializer):
     class Meta:
@@ -101,3 +102,70 @@ class PedidoSerializerControlProduccion(serializers.ModelSerializer):
     class Meta:
         model = Pedido
         fields = '__all__'
+
+class PedidoDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Pedido
+        fields = '__all__'
+
+    def validate(self, data):
+        total_calculado = 0.0
+        todos_despachados = True
+
+        for producto in data.get('products', []):
+            cantidad_unidades = producto.get('cantidad_unidades', 0)
+            cantidades_despachadas = producto.get('cantidades_despachadas', 0)
+
+            # Validación de cantidades
+            if cantidad_unidades < cantidades_despachadas:
+                raise serializers.ValidationError(
+                    f"El valor de 'cantidad_unidades' no puede ser menor que 'cantidades_despachadas' para el producto {producto.get('name')}"
+                )
+
+            vr_unitario = producto.get('vr_unitario', 0.0)
+            vr_unitario_descuento = producto.get('vr_unitario_descuento', 0.0)
+            usar_descuento = producto.get('usar_descuento', False)
+            iva = producto.get('iva', 0.0)
+            iva_aplicado_vr_unitario = producto.get('iva_aplicado_vr_unitario', False)
+            iva_aplicado_unitario_descuento = producto.get('iva_aplicado_unitario_descuento', False)
+            descuento_total = producto.get('descuento_total', 0.0)
+
+            # Calculamos el precio a aplicar
+            vr_unitario_a_usar = vr_unitario_descuento if usar_descuento else vr_unitario
+
+            # Aplicamos IVA
+            if iva > 0:
+                if iva_aplicado_vr_unitario:
+                    vr_unitario_a_usar += vr_unitario * (iva / 100)
+                elif iva_aplicado_unitario_descuento:
+                    vr_unitario_a_usar += (vr_unitario_descuento * (iva / 100))
+
+            # Calculamos el total del producto
+            total_producto = cantidad_unidades * vr_unitario_a_usar
+
+            # Aplicamos el descuento total
+            descuento_total_aplicado = total_producto * (descuento_total / 100)
+            total_producto -= descuento_total_aplicado
+
+            # Acumulamos el total
+            total_calculado += total_producto
+
+            # Verificamos si todos los productos están despachados
+            if cantidad_unidades != cantidades_despachadas:
+                todos_despachados = False
+
+        # Descuento global
+        total_discount_ordered = data.get('total_discount_ordered', 0)
+        if total_discount_ordered > 0:
+            descuento_general= total_calculado * (total_discount_ordered / 100)
+            total_calculado -= descuento_general
+
+        # Actualización del estado
+        if todos_despachados:
+            data['state'] = 2  # Todos los productos están despachados
+        else:
+            data['state'] = 1  # Al menos un producto no está despachado
+
+        data['total'] = total_calculado
+
+        return data
