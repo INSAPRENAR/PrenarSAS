@@ -45,3 +45,4 @@ from .reporteResumenPagosExcelView import downloadResumenPagoView
 from .ordenDespachoPDFView import OrdenCarguePDFView
 from .despachoEspecificoView import DespachoEspecificoView
 from .generacionPasswordView import GeneracionPasswordView
+from .detailPedidoEspecificoView import PedidoDetailEspecificoView
