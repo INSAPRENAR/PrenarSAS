@@ -46,3 +46,4 @@ from .ordenDespachoPDFView import OrdenCarguePDFView
 from .despachoEspecificoView import DespachoEspecificoView
 from .generacionPasswordView import GeneracionPasswordView
 from .detailPedidoEspecificoView import PedidoDetailEspecificoView
+from .inventarioDetailView import InventarioEspecificoUpdateView

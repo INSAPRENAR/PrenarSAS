@@ -18,6 +18,7 @@ class Inventario(models.Model):
     lote=models.CharField(null=True, blank=True, max_length=255)
     production_order=models.CharField(null=True, blank=True, max_length=255)
     transporter_name=models.CharField(null=True, blank=True, max_length=255)
+    label_number_estiva=models.CharField(null=True, blank=True, max_length=255)
     email_user=models.EmailField()
     registration_date=models.DateField(auto_now_add=True)
 
