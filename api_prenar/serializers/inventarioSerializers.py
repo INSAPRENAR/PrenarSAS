@@ -143,6 +143,7 @@ class InventarioSerializerInventario(serializers.ModelSerializer):
             'inventory_type',
             'categori',
             'lote',
+            'label_number_estiva',
             'production_order',
             'transporter_name',
             'observation',
@@ -154,7 +155,8 @@ class InventarioSerializerInventario(serializers.ModelSerializer):
             'name_cliente',
             'saldo_almacen',
             'inventory_type_display',
-            'almacen_producto'
+            'almacen_producto',
+            'cargo_number'
         ]
     def get_inventory_type_display(self, obj):
         # Django automáticamente genera el método get_FIELD_display() para campos con choices.
@@ -182,6 +184,7 @@ class InventarioSerializerInventarioDos(serializers.ModelSerializer):
             'inventory_type',
             'categori',
             'lote',
+            'label_number_estiva',
             'production_order',
             'transporter_name',
             'observation',
@@ -193,8 +196,10 @@ class InventarioSerializerInventarioDos(serializers.ModelSerializer):
             'name_cliente',
             'saldo_almacen',
             'inventory_type_display',
-            'almacen_producto'
+            'almacen_producto',
+            'cargo_number'
         ]
     def get_inventory_type_display(self, obj):
         # Django automáticamente genera el método get_FIELD_display() para campos con choices.
         return obj.get_inventory_type_display()
+

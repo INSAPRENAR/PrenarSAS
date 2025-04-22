@@ -2,8 +2,10 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from api_prenar.serializers.inventarioSerializers import InventarioSerializer
+from api_prenar.serializers.inventarioSerializers import InventarioSerializerInventario, InventarioSerializerInventarioDos
 from api_prenar.models import Inventario, GeneracionPassword
 from django.db import transaction
+from api_prenar.models import Inventario
 
 class InventarioView(APIView):
 
@@ -146,3 +148,62 @@ class InventarioView(APIView):
                 {"message": "Ocurrió un error al intentar eliminar el registro de inventario.", "error": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+    
+    def put(self, request, inventario_id):
+        try:
+            inventario = Inventario.objects.get(id=inventario_id)
+        except Inventario.DoesNotExist:
+            return Response(
+                {"message": "Inventario no encontrado."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        # 2. Determinar qué serializador usar
+        #    Asegúrate de que inventory_type esté en el body
+        inventory_type = request.data.get('inventory_type', None)
+        if inventory_type is None:
+            return Response(
+                {"message": "Debe enviar 'inventory_type' en el payload."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Convertimos a entero para la comparación
+        try:
+            inv_type = int(inventory_type)
+        except (TypeError, ValueError):
+            return Response(
+                {"message": "'inventory_type' debe ser un número."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # 3. Selección dinámica del serializador
+        if inv_type == 1:
+            serializer_class = InventarioSerializerInventario
+        elif inv_type == 2:
+            serializer_class = InventarioSerializerInventarioDos
+        else:
+            return Response(
+                {"message": "Valor de 'inventory_type' inválido. Debe ser 1 o 2."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # 4. Instanciar y validar
+        serializer = serializer_class(inventario, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                {
+                    "message": "Inventario actualizado exitosamente.",
+                    "inventario": serializer.data
+                },
+                status=status.HTTP_200_OK
+            )
+
+        # 5. Responder con errores
+        return Response(
+            {
+                "message": "Error al actualizar el inventario.",
+                "errors": serializer.errors
+            },
+            status=status.HTTP_400_BAD_REQUEST
+        )
