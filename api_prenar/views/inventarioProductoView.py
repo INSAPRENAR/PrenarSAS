@@ -21,6 +21,7 @@ class InventarioPorProductoView(APIView):
             end_date = request.query_params.get('end_date', None)
             name_cliente=request.query_params.get('name_cliente',None)
             categoria_filter = request.query_params.get('categoria', None)
+            label_number_estiva   = request.query_params.get('label_number_estiva',None)
 
             # Construir el filtro básico por producto e inventory_type
             filters = Q(id_producto=id_producto, inventory_type=categori)
@@ -41,6 +42,10 @@ class InventarioPorProductoView(APIView):
                 filters &= Q(inventory_date__gte=start_date)
             elif end_date:
                 filters &= Q(inventory_date__lte=end_date)
+            
+            # Nuevo filtro: label_number_estiva
+            if label_number_estiva:
+                filters &= Q(label_number_estiva__icontains=label_number_estiva)
             
 
             # Filtrar los inventarios aplicando los filtros
