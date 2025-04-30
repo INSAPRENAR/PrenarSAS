@@ -1,12 +1,18 @@
 from rest_framework import serializers
 from api_prenar.models import Pedido, Pago
 from django.db.models import Sum
+from decimal import Decimal, ROUND_DOWN, getcontext
+
+def trunc_float(value, decimals=2):
+        factor = 10 ** decimals
+        return int(value * factor) / factor
 
 class PedidoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Pedido
         fields = '__all__'
     
+
     def validate_products(self, products):
         """
         Valida y calcula el total para cada producto y el total general.
@@ -65,8 +71,10 @@ class PedidoSerializer(serializers.ModelSerializer):
             if descuento_total and descuento_total > 0:
                 product_total = product_total - (product_total * (descuento_total / 100))
             
-            product['total'] = product_total
-            total_general += product_total
+
+            # Truncamiento a float con dos decimales sin redondear
+            product['total'] = trunc_float(product_total)
+            total_general += trunc_float(product_total)
 
         self.context['total_general'] = total_general  # Almacena el total general en el contexto
         return products
@@ -80,8 +88,9 @@ class PedidoSerializer(serializers.ModelSerializer):
             # Calcula el total aplicando el descuento porcentual
             total_general = total_general - (total_general * (descuento / 100))
         
+        # Truncar el total general a dos decimales sin redondear
+        total_general = trunc_float(total_general)
         validated_data['total'] = total_general
-        # Además, asigna el mismo valor al campo 'outstanding_balance'
         validated_data['outstanding_balance'] = total_general
         return super().create(validated_data)
     
@@ -166,6 +175,8 @@ class PedidoDetailSerializer(serializers.ModelSerializer):
         else:
             data['state'] = 1  # Al menos un producto no está despachado
 
-        data['total'] = total_calculado
+        # Truncar a dos decimales sin redondear
+        total_truncado = Decimal(total_calculado).quantize(Decimal('0.00'), rounding=ROUND_DOWN)
+        data['total'] = float(total_truncado)
 
         return data
