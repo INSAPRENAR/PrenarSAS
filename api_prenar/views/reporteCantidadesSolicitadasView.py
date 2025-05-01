@@ -9,29 +9,23 @@ class CantidadesTotalesProductosPendientesView(APIView):
             # Filtrar pedidos pendientes (state=1)
             pedidos_pendientes = Pedido.objects.filter(state=1)
 
-            # Diccionario para acumular las cantidades faltantes por referencia
-            cantidades_faltantes = {}
+            # Diccionario para acumular la suma de cantidad_unidades por referencia
+            cantidades_totales = {}
 
             for pedido in pedidos_pendientes:
                 for producto in pedido.products:
                     referencia = producto.get("referencia")
                     cantidad_unidades = producto.get("cantidad_unidades", 0)
                     control = producto.get("control", False)  # Obtener el valor de 'control', por defecto 0
-                    cantidades_despachadas = producto.get("cantidades_despachadas", 0)
                     
                     # Solo considerar productos con 'control' > 0
                     if referencia is not None and control == False:
-                        # Calcular lo que falta despachar de este producto
-                        diferencia = cantidad_unidades - cantidades_despachadas
-
-                        # Solo interesan los productos con faltante (diferencia > 0)
-                        if diferencia > 0:
-                            if referencia not in cantidades_faltantes:
-                                cantidades_faltantes[referencia] = 0
-                            cantidades_faltantes[referencia] += diferencia
+                            if referencia not in cantidades_totales:
+                                cantidades_totales[referencia] = 0
+                            cantidades_totales[referencia] += cantidad_unidades
 
             # Obtener los productos del modelo Producto que correspondan a las referencias con faltante
-            productos = Producto.objects.filter(id__in=cantidades_faltantes.keys())
+            productos = Producto.objects.filter(id__in=cantidades_totales.keys())
 
             # Crear la respuesta con nombre y la cantidad faltante total
             productos_data = [
@@ -39,7 +33,7 @@ class CantidadesTotalesProductosPendientesView(APIView):
                     "name": producto.name,
                     "codigo": producto.product_code,
                     "color": producto.color,
-                    "total_quantity_requested": cantidades_faltantes.get(producto.id, 0)
+                    "total_quantity_requested": cantidades_totales.get(producto.id, 0)
                 }
                 for producto in productos
             ]
