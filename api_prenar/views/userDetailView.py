@@ -10,9 +10,9 @@ from api_prenar.serializers.userSerializers import UserUpdateSerializer
 class UserDetail(APIView):
     permission_classes = [IsAuthenticated]
 
-    def patch(self, request, user_id):
+    def put(self, request, user_id):
         """
-        Actualiza parcialmente el name, email, contraseña y rol de un usuario.
+        Reemplaza (PUT) todos los campos indicados en el serializer.
         """
         if not request.user.is_superuser:
             raise PermissionDenied("No tienes permisos para realizar esta acción.")
@@ -21,11 +21,15 @@ class UserDetail(APIView):
         if not user:
             raise NotFound("Usuario no encontrado.")
         
-        serializer = UserUpdateSerializer(user, data=request.data, partial=True)
+        # Para PUT, normalmente esperamos un reemplazo completo,
+        # así que omitimos partial o lo ponemos en False.
+        serializer = UserUpdateSerializer(user, data=request.data, partial=False)
         if serializer.is_valid():
             serializer.save()
-            print("Contraseña encriptada:", user.password)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(
+                {"message": "Usuario actualizado exitosamente.", "Usuario": serializer.data},
+                status=status.HTTP_200_OK
+            )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
     def delete(self, request, user_id):

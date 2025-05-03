@@ -17,18 +17,30 @@ class UserSerializer(serializers.ModelSerializer):
         return instance
 
 class UserUpdateSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, required=False)
+
     class Meta:
         model = User
-        fields = ['name', 'email', 'password', 'role']
+        fields = ['name', 'email', 'role', 'password']
+        extra_kwargs = {
+            'email': {'required': False},
+            'name': {'required': False},
+            'role': {'required': False},
+        }
 
     def update(self, instance, validated_data):
-        #Si la contraseña es parte de los datos, la encriptamos antes de guardarla
-        if 'password' in validated_data:
-            instance.set_password(validated_data['password'])  #Encripta la contraseña
-            validated_data['password'] = instance.password  #Aseguramos que la contraseña encriptada esté en validated_data
-        
-        #Guardamos el resto de los datos (email y role)
-        return super().update(instance, validated_data)
+        # 1) Si envían password, la extraemos para usar set_password más abajo
+        pwd = validated_data.pop('password', None)
+
+        # 2) Actualizamos solo los demás campos (name, email, role)
+        instance = super().update(instance, validated_data)
+
+        # 3) Si había password, la seteamos con el método correcto
+        if pwd:
+            instance.set_password(pwd)
+            instance.save()
+
+        return instance
 
 class UserDetailSerializer(serializers.ModelSerializer):
     class Meta:
