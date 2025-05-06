@@ -26,7 +26,6 @@ class InventarioView(APIView):
                     }
 
             resultado = list(agrupado_por_producto.values())
-            print(f"Resultado agrupado: {resultado}")
 
             return Response(
                 {"message": "Inventario agrupado por producto obtenido exitosamente.", "data": resultado},
