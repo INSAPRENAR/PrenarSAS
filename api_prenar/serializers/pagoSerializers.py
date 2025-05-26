@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from api_prenar.models import Pago
+import math
 
 class PagoSerializer(serializers.ModelSerializer):
     class Meta:
@@ -30,17 +31,17 @@ class PagoSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         # Obtiene el pedido relacionado con el pago
         pedido = validated_data['id_pedido']
+        monto: float = validated_data['amount']
+
+        # Calcula el nuevo saldo en bruto
+        raw_saldo = pedido.outstanding_balance - monto
         
-        # Verifica que el monto no exceda el saldo pendiente
-        if validated_data['amount'] > pedido.outstanding_balance:
-            raise serializers.ValidationError("El monto del pago excede el saldo pendiente del pedido.")
-        
-        # Actualiza el saldo pendiente del pedido
-        pedido.outstanding_balance -= validated_data['amount']
+        # Trunca a 2 decimales (sin redondeo)
+        nuevo_saldo = math.floor(raw_saldo * 100) / 100.0
+
+        pedido.outstanding_balance = nuevo_saldo
         pedido.save()
 
-
-        # Crea y retorna el registro de pago
         return super().create(validated_data)
 
 class PagoDetalleSerializer(serializers.ModelSerializer):
