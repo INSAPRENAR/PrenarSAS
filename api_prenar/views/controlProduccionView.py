@@ -16,7 +16,9 @@ def control_produccion_agrupado(request):
             name_producto = producto["name"]
             color_producto = producto["color"]
             control = producto.get("control", False)
-            cantidad_pendiente = producto["cantidad_unidades"]
+            cantidad_total = producto["cantidad_unidades"]
+            cantidad_despachada = producto["cantidades_despachadas"]
+            cantidad_pendiente_producir = cantidad_total - cantidad_despachada
 
             if control == False:
                 if referencia not in productos_agrupados:
@@ -34,10 +36,12 @@ def control_produccion_agrupado(request):
                     "pedido_code": pedido.order_code,
                     "fecha_entrega": pedido.delivery_date,
                     "cliente": cliente,
-                    "cantidad_pendiente": cantidad_pendiente
+                    "cantidad_total": cantidad_total,
+                    "cantidad_despachada":cantidad_despachada,
+                    "cantidad_pendiente_produccion": cantidad_pendiente_producir
                 })
 
-                productos_agrupados[referencia]["total_a_deber"] += cantidad_pendiente
+                productos_agrupados[referencia]["total_a_deber"] += cantidad_pendiente_producir
 
     for referencia, datos in productos_agrupados.items():
         total_almacen = get_total_almacen(referencia)
@@ -45,6 +49,6 @@ def control_produccion_agrupado(request):
         datos["cantidadAlmacen_menosCantidadAdeber"] =  total_almacen - datos["total_a_deber"]
 
     return JsonResponse({
-        "message": "Control de producción generado exitosamente.",
+        "message": "Control de produccion generado exitosamente.",
         "productos": list(productos_agrupados.values())
     })
