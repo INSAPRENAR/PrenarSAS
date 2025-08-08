@@ -51,11 +51,10 @@
     .info-table {
       width: 100%;
       border-collapse: collapse;
-      margin-bottom: 5px;
+      
     }
     .info-table td {
-      padding-top: 5px;
-      padding-bottom: 5px;
+      padding-top: 2px;
       vertical-align: top;
       border: 1px solid #000;
     }
@@ -72,7 +71,7 @@
     }
     .products-table th,
     .products-table td {
-      padding: 5px;
+      padding-top: 2px;
       border: 1px solid #000;
       text-align: left;
     }
@@ -82,7 +81,7 @@
     .observations-table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 5px;
+      padding-top: 2px;
     }
 
     .title-observation {
@@ -102,7 +101,7 @@
   }
   .firmas-table td {
     border: 1px solid #000;
-    padding: 5px;
+    padding: 2px;
     vertical-align: middle;
     width: 50%; /* Se cambia de 33% a 50% */
   }
@@ -137,21 +136,25 @@
     <!-- Tabla de información principal -->
     <table class="info-table">
       <tr>
+        <td><strong>Fecha:</strong> {{ dispatch_date }}</td>
         <td><strong>Hora Entrada:</strong> {{ entry_time }}</td>
         <td><strong>Hora Salida:</strong> {{ departure_time }}</td>
-        <td><strong>No. Pedido:</strong> {{ order_code }}</td>
+        
       </tr>
       <tr>
+        <td><strong>No. Pedido:</strong> {{ order_code }}</td>
         <td><strong>Cliente:</strong> {{ client_name }}</td>
         <td><strong>Transportador:</strong> {{ driver }}</td>
-        <td><strong>Cédula Transp.:</strong> {{ driver_identification }}</td>
+        
       </tr>
       <tr>
+        <td><strong>Cédula Transp.:</strong> {{ driver_identification }}</td>
         <td><strong>Placa Veh.:</strong> {{ plate }}</td>
         <td><strong>Tipo Vehículo:</strong> {{ vehicle_type }}</td>
-        <td><strong>Contacto:</strong> {{ phone }}</td>
+        
       </tr>
       <tr>
+        <td><strong>Contacto:</strong> {{ phone }}</td>
         <td><strong>No. Orden Prod.:</strong> {{ production_number }}</td>
         <td></td>
       </tr>
@@ -216,112 +219,7 @@
         EL TRANSPORTADOR ACEPTA QUE HA RECIBIDO LA CANTIDAD DESCRITA EN EL SIGUIENTE DOCUMENTO SIN IMPERFECTOS Y CONDICIONES ÓPTIMAS PARA SU INSTALACION.
       </p>
       <p>
-        LAS ESTIBAS DEBEN SER DEVUELTAS EN EL PRÓXIMO CARGUE, DE NO SER REGRESADAS SE PASARÁ UNA CUENTA DE COBRO POR 15000 CADA ESTIBA.
-      </p>
-    </div>
-  </div>
-
-  <!-- Segunda copia de la orden en una nueva página -->
-  <div class="order-copy new-page">
-    <!-- Encabezado / Logo / Datos principales usando tabla -->
-    <table class="header-table">
-      <tr>
-        <td style="width: 33%; text-align: left;">
-          <img src="data:image/jpeg;base64,{{ logo_base64 }}" alt="Logo" style="width:190px;">
-        </td>
-        <td style="width: 34%; text-align: center;">
-          <div class="title">Orden de Cargue</div>
-          <div class="subtitle">Gestion de operaciones y produccion</div>
-        </td>
-        <td style="width: 33%; text-align: center;">
-          <strong>Orden de Cargue N°:</strong> {{ cargo_number }}
-        </td>
-      </tr>
-    </table>
-
-    <!-- Tabla de información principal -->
-    <table class="info-table">
-      <tr>
-        <td><strong>Hora Entrada:</strong> {{ entry_time }}</td>
-        <td><strong>Hora Salida:</strong> {{ departure_time }}</td>
-        <td><strong>No. Pedido:</strong> {{ order_code }}</td>
-      </tr>
-      <tr>
-        <td><strong>Cliente:</strong> {{ client_name }}</td>
-        <td><strong>Transportador:</strong> {{ driver }}</td>
-        <td><strong>Cédula Transp.:</strong> {{ driver_identification }}</td>
-      </tr>
-      <tr>
-        <td><strong>Placa Veh.:</strong> {{ plate }}</td>
-        <td><strong>Tipo Vehículo:</strong> {{ vehicle_type }}</td>
-        <td><strong>Contacto:</strong> {{ phone }}</td>
-      </tr>
-      <tr>
-        <td><strong>No. Orden Prod.:</strong> {{ production_number }}</td>
-        <td></td>
-      </tr>
-    </table>
-
-    <!-- Sección de productos -->
-    <div class="section-title">Detalle de Productos</div>
-    <table class="products-table">
-      <thead>
-        <tr>
-          <th>Producto</th>
-          <th>Color</th>
-          <th>Cantidad</th>
-          <th>Núm. Estibas</th>
-          <th>Lote</th>
-          <th>Núm. Rótulo</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for product in products %}
-        <tr>
-          <td>{{ product.name }}</td>
-          <td>{{ product.color }}</td>
-          <td>{{ product.cantidad }}</td>
-          <td>{{ product.numero_estibas }}</td>
-          <td>{{ product.lote }}</td>
-          <td>{{ product.numero_rotulo }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-
-    <!-- Observaciones -->
-    <table class="observations-table">
-      <tr>
-        <td class="title-observation"><strong>Observaciones</strong></td>
-      </tr>
-      <tr>
-        <td>{{ observation }}</td>
-      </tr>
-    </table>
-
-    <!-- Sección de Firmas -->
-    <table class="firmas-table">
-      <tr>
-        <td><strong>Autoriza Despacho:</strong></td>
-        <td></td>
-      </tr>
-      <tr>
-        <td><strong>Encargado de Almacén:</strong></td>
-        <td></td>
-      </tr>
-      <tr>
-        <td><strong>Recibe a Satisfacción:</strong></td>
-        <td></td>
-      </tr>
-    </table>
-
-    <!-- Notas debajo de las firmas -->
-    <div class="firma-notes">
-      <p>
-        EL TRANSPORTADOR ACEPTA QUE HA RECIBIDO LA CANTIDAD DESCRITA EN EL SIGUIENTE DOCUMENTO SIN IMPERFECTOS Y CONDICIONES ÓPTIMAS PARA SU INSTALACION.
-      </p>
-      <p>
-        LAS ESTIBAS DEBEN SER DEVUELTAS EN EL PRÓXIMO CARGUE, DE NO SER REGRESADAS SE PASARÁ UNA CUENTA DE COBRO POR 15000 CADA ESTIBA.
+        LAS ESTIBAS DEBEN SER DEVUELTAS EN EL PRÓXIMO CARGUE, DE NO SER REGRESADAS SE PASARÁ UNA CUENTA DE COBRO POR 25000 CADA ESTIBA.
       </p>
     </div>
   </div>
