@@ -111,6 +111,26 @@
       margin-top: 10px;
       padding: 5px;
     }
+    
+    /* Evitar que una fila se parta entre páginas */
+  .products-table { 
+    page-break-inside: auto; 
+  }
+
+  .products-table tr { 
+    page-break-inside: avoid; 
+    page-break-after: auto; 
+  }
+
+  .products-table td, 
+  .products-table th { 
+    page-break-inside: avoid; 
+  }
+
+  /* (Opcional) para que no desborde texto */
+  .products-table td { 
+    word-wrap: break-word; 
+  }
   </style>
 </head>
 <body>
@@ -128,7 +148,7 @@
           <div class="subtitle">Gestion de operaciones y produccion</div>
         </td>
         <td style="width: 33%; text-align: center;">
-          <strong>Orden de Cargue N°:</strong> {{ cargo_number }}
+          <strong>Orden de Cargue N°: </strong>{{cargo_number}}
         </td>
       </tr>
     </table>
@@ -187,6 +207,22 @@
       </tbody>
     </table>
 
+    <!-- Párrafo con totales globales -->
+    <p style="margin-top:6px; font-size:10px;">
+      <strong>Totales:</strong> Estibas: {{ total_estibas }} — Cantidad General Productos: {{ total_cantidad }}
+    </p>
+
+    <!-- Totales por producto en párrafos -->
+    <div style="margin-top:6px; font-size:10px;">
+      <strong>Totales por producto:</strong>
+      {% for item in totales_por_producto %}
+        <p style="margin:2px 0;">
+          •{{ item.name }}{% if item.color %} ({{ item.color }}){% endif %}:
+          Cantidad: {{ item.cantidad_total }}
+        </p>
+      {% endfor %}
+    </div>
+
     <!-- Observaciones -->
     <table class="observations-table">
       <tr>
@@ -216,10 +252,7 @@
     <!-- Notas debajo de las firmas -->
     <div class="firma-notes">
       <p>
-        EL TRANSPORTADOR ACEPTA QUE HA RECIBIDO LA CANTIDAD DESCRITA EN EL SIGUIENTE DOCUMENTO SIN IMPERFECTOS Y CONDICIONES ÓPTIMAS PARA SU INSTALACION.
-      </p>
-      <p>
-        LAS ESTIBAS DEBEN SER DEVUELTAS EN EL PRÓXIMO CARGUE, DE NO SER REGRESADAS SE PASARÁ UNA CUENTA DE COBRO POR 25000 CADA ESTIBA.
+        el transportador acepta que ha recibido la cantidad descrita en el siguiente documento sin imperfectos y condiciones óptimas para su instalacion. las estibas deben ser devueltas en el próximo cargue, de no ser regresadas se pasará una cuenta de cobro por 25000 cada estiba.
       </p>
     </div>
   </div>
