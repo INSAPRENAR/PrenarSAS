@@ -2,23 +2,23 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from api_prenar.models import Despacho
+import re
 
 class NextCargoNumberView(APIView):
     def get(self, request):
-        # Obtener todos los cargo_number que sean numéricos
-        numeros = []
+        # Tomar solo los cargo_number que empiecen por T seguido de dígitos (p.ej. T322)
+        pattern = re.compile(r'^[Tt](\d+)$')  # case-insensitive para la T
+        max_num = None
 
-        for despacho in Despacho.objects.all():
-            try:
-                numeros.append(int(despacho.cargo_number))
-            except ValueError:
-                # Ignorar los que no sean numéricos
-                pass
+        # Evita cargar todos los campos del modelo
+        for code in Despacho.objects.values_list('cargo_number', flat=True).iterator():
+            if not code:
+                continue
+            m = pattern.match(str(code).strip())
+            if m:
+                n = int(m.group(1))
+                if max_num is None or n > max_num:
+                    max_num = n
 
-        if numeros:
-            siguiente_numero = max(numeros) + 1
-        else:
-            # Si no hay números válidos en la base, empezamos desde 317
-            siguiente_numero = 317
-
-        return Response({"next_cargo_number": str(siguiente_numero)}, status=status.HTTP_200_OK)
+        next_code = f"T{max_num + 1}" if max_num is not None else "T322"
+        return Response({"next_cargo_number": next_code}, status=status.HTTP_200_OK)

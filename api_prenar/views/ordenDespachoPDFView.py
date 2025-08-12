@@ -8,6 +8,7 @@ from xhtml2pdf import pisa
 from io import BytesIO
 import base64
 from django.contrib.staticfiles import finders
+from collections import defaultdict
 
 def get_static_image_base64(static_path):
     """
@@ -34,18 +35,48 @@ class OrdenCarguePDFView(APIView):
             order_code = pedido.order_code
             client_name = pedido.id_client.name  # ajusta según tu modelo
 
-            # Serializa 'products'
-            # Asumiendo que despacho.products es una lista de objetos,
-            # extraemos sus campos deseados.
-            products = [{
-                "lote": product.get('lote'),
-                "name": product.get('name'),
-                "color": product.get('color'),
-                "cantidad": product.get('cantidad'),
-                "referencia": product.get('referencia'),
-                "numero_rotulo": product.get('numero_rotulo'),
-                "numero_estibas": product.get('numero_estibas'),
-            } for product in despacho.products]
+            # Lista cruda desde el JSON del despacho (puede venir vacía)
+            items = despacho.products or []
+
+            # Normalización por si vienen strings/None
+            products = []
+            for product in items:
+                cantidad_val = product.get('cantidad', product.get('cantidad_unidades', 0))
+                estibas_val = product.get('numero_estibas', 0)
+                products.append({
+                    "lote": product.get('lote'),
+                    "name": product.get('name'),
+                    "color": product.get('color'),
+                    "cantidad": int(cantidad_val or 0),
+                    "referencia": product.get('referencia'),
+                    "numero_rotulo": product.get('numero_rotulo'),
+                    "numero_estibas": int(estibas_val or 0),
+                })
+
+            # ==> TOTALES SOLICITADOS
+            total_estibas = sum(p["numero_estibas"] for p in products)
+            total_cantidad = sum(p["cantidad"] for p in products)
+
+            # Totales por producto (referencia + name + color)
+            agrupados = defaultdict(lambda: {
+                "referencia": None, "name": None, "color": None,
+                "cantidad_total": 0, "estibas_total": 0
+            })
+
+            for p in products:
+                key = (p["referencia"], p["name"], p["color"])
+                a = agrupados[key]
+                a["referencia"] = p["referencia"]
+                a["name"] = p["name"]
+                a["color"] = p["color"]
+                a["cantidad_total"] += p["cantidad"]
+                a["estibas_total"] += p["numero_estibas"]
+
+            # A lista y ordenado por nombre (puedes cambiar a referencia si prefieres)
+            totales_por_producto = sorted(
+                agrupados.values(),
+                key=lambda x: (str(x["name"] or ""), str(x["color"] or ""), str(x["referencia"] or ""))
+            )
 
             # Obtenemos la imagen en Base64
             logo_base64 = get_static_image_base64('api_prenar/logo_insa.jpeg')
@@ -68,6 +99,9 @@ class OrdenCarguePDFView(APIView):
                 "dispatcher": despacho.dispatcher,
                 "warehouseman": despacho.warehouseman,
                 "logo_base64": logo_base64,  # Variable para la imagen
+                "total_estibas": total_estibas,
+                "total_cantidad": total_cantidad,
+                "totales_por_producto": totales_por_producto,
             }
 
             # Renderizamos la plantilla a HTML
