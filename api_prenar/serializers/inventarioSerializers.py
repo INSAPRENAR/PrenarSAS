@@ -67,58 +67,92 @@ class InventarioSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         """
-        Se actualizan las cantidades en almacén dependiendo del tipo de inventario:
-         - Si inventory_type es 1 se suma/resta a warehouse_quantity_conforme.
-         - Si inventory_type es 2 se suma/resta a warehouse_quantity_not_conforme.
-        Además, se actualiza el saldo_almacen del registro inventario.
+        - Actualiza cantidades del producto según inventario_type:
+            1 -> warehouse_quantity_conforme
+            2 -> warehouse_quantity_not_conforme
+        - Calcula y guarda saldo_almacen en el registro de Inventario.
+        - Si categoria == 1 e inventario_type == 1 y hay pedido:
+            Suma producción acumulada y, si alcanza la cantidad solicitada, marca 'control=True' en el pedido.
         """
         with transaction.atomic():
-            # Obtenemos las cantidades indicadas en la data, por ejemplo desde el request.
-            production = validated_data.get('production', 0)
-            output = validated_data.get('output', 0)
-            
-            # Se asignan a los campos del modelo (production y output) del inventario.
+            production = int(validated_data.get('production', 0) or 0)
+            output = int(validated_data.get('output', 0) or 0)
+
+            # Asegurarlos en validated_data por si vienen None
             validated_data['production'] = production
             validated_data['output'] = output
 
-            # Obtenemos el producto y el tipo de inventario
             producto = validated_data.get('id_producto')
-            inventory_type = validated_data.get('inventory_type')
+            inventario_type = validated_data.get('inventory_type')  # 1=conforme, 2=no conforme
+            categori = validated_data.get('categori')             # tu categoría de negocio (p.ej. 1=producción)
+            pedido = validated_data.get('id_pedido')
 
-            if producto:
-                if inventory_type == 1:
-                    # Producción: se suma al stock conforme
-                    if production > 0:
-                        producto.warehouse_quantity_conforme += production
-                    # Salida: se resta del stock conforme con validación
-                    if output > 0:
-                        if producto.warehouse_quantity_conforme < output:
-                            raise serializers.ValidationError(
-                                f"La cantidad en almacén del producto {producto.name} ({producto.warehouse_quantity_conforme}) es insuficiente para despachar {output} unidades."
-                            )
-                        producto.warehouse_quantity_conforme -= output
-                    # Se guarda el saldo en el inventario según la cantidad conforme actualizada
-                    validated_data['saldo_almacen'] = producto.warehouse_quantity_conforme
-                elif inventory_type == 2:
-                    # Producción: se suma al stock NO conforme
-                    if production > 0:
-                        producto.warehouse_quantity_not_conforme += production
-                    # Salida: se resta del stock NO conforme con validación
-                    if output > 0:
-                        if producto.warehouse_quantity_not_conforme < output:
-                            raise serializers.ValidationError(
-                                f"La cantidad en almacén del producto {producto.name} ({producto.warehouse_quantity_not_conforme}) es insuficiente para despachar {output} unidades."
-                            )
-                        producto.warehouse_quantity_not_conforme -= output
-                    # Se guarda el saldo en el inventario según la cantidad no conforme actualizada
-                    validated_data['saldo_almacen'] = producto.warehouse_quantity_not_conforme
-                else:
-                    raise serializers.ValidationError("El tipo de inventario no es válido.")
+            # Actualizar stock del producto según inventario_type
+            if not producto:
+                raise serializers.ValidationError("El campo 'id_producto' es obligatorio.")
 
-                # Se guarda la instancia del producto con los nuevos valores actualizados.
-                producto.save()
+            if inventario_type == 1:
+                # Stock CONFORME
+                if production > 0:
+                    producto.warehouse_quantity_conforme += production
+                if output > 0:
+                    if producto.warehouse_quantity_conforme < output:
+                        raise serializers.ValidationError(
+                            f"La cantidad en almacén del producto {producto.name} "
+                            f"({producto.warehouse_quantity_conforme}) es insuficiente para despachar {output} unidades."
+                        )
+                    producto.warehouse_quantity_conforme -= output
+                validated_data['saldo_almacen'] = producto.warehouse_quantity_conforme
 
+            elif inventario_type == 2:
+                # Stock NO CONFORME
+                if production > 0:
+                    producto.warehouse_quantity_not_conforme += production
+                if output > 0:
+                    if producto.warehouse_quantity_not_conforme < output:
+                        raise serializers.ValidationError(
+                            f"La cantidad en almacén del producto {producto.name} "
+                            f"({producto.warehouse_quantity_not_conforme}) es insuficiente para despachar {output} unidades."
+                        )
+                    producto.warehouse_quantity_not_conforme -= output
+                validated_data['saldo_almacen'] = producto.warehouse_quantity_not_conforme
+
+            else:
+                raise serializers.ValidationError("El tipo de inventario no es válido.")
+
+            # Guardar cambios de stock del producto
+            producto.save()
+
+            # Crear el registro de inventario
             inventario = super().create(validated_data)
+
+            # --- Reglas de negocio extra: marcar control=True cuando corresponda ---
+            # Solo aplica para categoria=1 (producción) e inventario_type=1 (conforme) con pedido presente.
+            if pedido and categori == 1 and inventario_type == 1:
+                # Sumar TODA la producción conforme (categoria=1, inventario_type=1) del producto para ese pedido
+                total_produccion_conforme = (
+                    Inventario.objects
+                    .filter(
+                        id_producto=producto,
+                        id_pedido=pedido,
+                        categori=1,
+                        inventory_type=1
+                    )
+                    .aggregate(total=Sum('production'))['total'] or 0
+                )
+
+                # Buscar el item del producto dentro del JSON del pedido (por 'referencia')
+                productos_pedido = pedido.products or []
+                for item in productos_pedido:
+                    if item.get('referencia') == producto.id:
+                        cantidad_pedido = int(item.get('cantidad_unidades', 0) or 0)
+                        # Si ya se cumplió (o superó) la cantidad, marcar control=True
+                        if total_produccion_conforme >= cantidad_pedido:
+                            if not item.get('control', False):
+                                item['control'] = True
+                                pedido.products = productos_pedido
+                                pedido.save()
+                        break
             return inventario
 
 class InventarioSerializerInventario(serializers.ModelSerializer):
