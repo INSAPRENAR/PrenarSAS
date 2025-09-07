@@ -149,60 +149,153 @@ class InventarioView(APIView):
             )
     
     def put(self, request, inventario_id):
-        try:
-            inventario = Inventario.objects.get(id=inventario_id)
-        except Inventario.DoesNotExist:
+        # Obtener la contraseña del cuerpo de la solicitud
+        password = request.data.get('password')
+        if not password:
             return Response(
-                {"message": "Inventario no encontrado."},
-                status=status.HTTP_404_NOT_FOUND
-            )
-
-        # 2. Determinar qué serializador usar
-        #    Asegúrate de que inventory_type esté en el body
-        inventory_type = request.data.get('inventory_type', None)
-        if inventory_type is None:
-            return Response(
-                {"message": "Debe enviar 'inventory_type' en el payload."},
+                {"message": "La contraseña es requerida para eliminar el inventario."},
                 status=status.HTTP_400_BAD_REQUEST
             )
-
-        # Convertimos a entero para la comparación
-        try:
-            inv_type = int(inventory_type)
-        except (TypeError, ValueError):
+        
+        # Obtener la instancia de GeneracionPassword para comparar
+        generacion = GeneracionPassword.objects.first()
+        if not generacion:
             return Response(
-                {"message": "'inventory_type' debe ser un número."},
-                status=status.HTTP_400_BAD_REQUEST
+                {"message": "La contraseña generada no está configurada en el sistema."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-
-        # 3. Selección dinámica del serializador
-        if inv_type == 1:
-            serializer_class = InventarioSerializerInventario
-        elif inv_type == 2:
-            serializer_class = InventarioSerializerInventarioDos
-        else:
+        
+        # Verificar la contraseña proporcionada con la del modelo
+        if password != generacion.password_generation:
             return Response(
-                {"message": "Valor de 'inventory_type' inválido. Debe ser 1 o 2."},
-                status=status.HTTP_400_BAD_REQUEST
+                {"message": "Contraseña incorrecta."},
+                status=status.HTTP_403_FORBIDDEN
             )
+    # Todo el flujo bajo una transacción
+        with transaction.atomic():
+            # 1) Bloquear el registro DENTRO del atomic
+            try:
+                inventario = (Inventario.objects
+                            .select_for_update()
+                            .select_related("id_producto")
+                            .get(id=inventario_id))
+            except Inventario.DoesNotExist:
+                return Response({"message": "Inventario no encontrado."},
+                                status=status.HTTP_404_NOT_FOUND)
 
-        # 4. Instanciar y validar
-        serializer = serializer_class(inventario, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(
-                {
-                    "message": "Inventario actualizado exitosamente.",
-                    "inventario": serializer.data
-                },
-                status=status.HTTP_200_OK
-            )
+            # 2) inventory_type obligatorio
+            inventory_type = request.data.get('inventory_type', None)
+            if inventory_type is None:
+                return Response({"message": "Debe enviar 'inventory_type' en el payload."},
+                                status=status.HTTP_400_BAD_REQUEST)
+            try:
+                inv_type = int(inventory_type)
+            except (TypeError, ValueError):
+                return Response({"message": "'inventory_type' debe ser un número."},
+                                status=status.HTTP_400_BAD_REQUEST)
 
-        # 5. Responder con errores
-        return Response(
-            {
-                "message": "Error al actualizar el inventario.",
-                "errors": serializer.errors
-            },
-            status=status.HTTP_400_BAD_REQUEST
-        )
+            if inv_type == 1:
+                serializer_class = InventarioSerializerInventario
+            elif inv_type == 2:
+                serializer_class = InventarioSerializerInventarioDos
+            else:
+                return Response({"message": "Valor de 'inventory_type' inválido. Debe ser 1 o 2."},
+                                status=status.HTTP_400_BAD_REQUEST)
+
+            # 3) Detectar cambios y calcular deltas crudos
+            prev_production = int(inventario.production or 0)
+            prev_output     = int(inventario.output or 0)
+
+            new_production = request.data.get('production', None)
+            new_output     = request.data.get('output', None)
+
+            if new_production is None:
+                new_production = prev_production
+            else:
+                try:
+                    new_production = int(new_production)
+                except (TypeError, ValueError):
+                    return Response({"message": "'production' debe ser un número."},
+                                    status=status.HTTP_400_BAD_REQUEST)
+
+            if new_output is None:
+                new_output = prev_output
+            else:
+                try:
+                    new_output = int(new_output)
+                except (TypeError, ValueError):
+                    return Response({"message": "'output' debe ser un número."},
+                                    status=status.HTTP_400_BAD_REQUEST)
+
+            changed_prod = (new_production != prev_production)
+            changed_out  = (new_output != prev_output)
+            if changed_prod and changed_out:
+                return Response({"message": "Solo uno de los campos puede cambiar por solicitud: 'production' o 'output'."},
+                                status=status.HTTP_400_BAD_REQUEST)
+
+            # 4) Guardar con serializer (otros campos)
+            serializer = serializer_class(inventario, data=request.data, partial=True)
+            if not serializer.is_valid():
+                return Response({"message": "Error al actualizar el inventario.",
+                                "errors": serializer.errors},
+                                status=status.HTTP_400_BAD_REQUEST)
+            inventario = serializer.save()
+
+            # 5) Si no cambió production/output, fin
+            if not changed_prod and not changed_out:
+                return Response({"message": "Inventario actualizado exitosamente.",
+                                "inventario": serializer.data},
+                                status=status.HTTP_200_OK)
+
+            # 6) Efecto sobre saldos según qué campo cambió (NO usamos 'categori' aquí)
+            if changed_prod:
+                delta = new_production - prev_production      # + sube producción, - baja producción
+                efecto = delta                                # producción afecta sumando
+            else:
+                delta = new_output - prev_output              # + sube salida, - baja salida
+                efecto = -delta                               # salida afecta restando
+
+            # 7) Actualizar STOCK del Producto (con validación de no-negativo)
+            producto = inventario.id_producto
+            if inv_type == 1:
+                nuevo_stock = int(producto.warehouse_quantity_conforme or 0) + efecto
+                if nuevo_stock < 0:
+                    return Response(
+                        {"message": f"Stock conforme insuficiente para aplicar el cambio (quedaría {nuevo_stock})."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                producto.warehouse_quantity_conforme = nuevo_stock
+                producto.save(update_fields=["warehouse_quantity_conforme"])
+            else:  # inv_type == 2
+                nuevo_stock = int(producto.warehouse_quantity_not_conforme or 0) + efecto
+                if nuevo_stock < 0:
+                    return Response(
+                        {"message": f"Stock no conforme insuficiente para aplicar el cambio (quedaría {nuevo_stock})."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                producto.warehouse_quantity_not_conforme = nuevo_stock
+                producto.save(update_fields=["warehouse_quantity_not_conforme"])
+
+            # 8) Aplicar efecto al propio registro y a los posteriores (mismo producto/tipo)
+            if efecto != 0:
+                # este registro
+                inventario.saldo_almacen = (inventario.saldo_almacen or 0) + efecto
+                inventario.save(update_fields=["saldo_almacen"])
+
+                filtro = {
+                    "id_producto": inventario.id_producto,
+                    "inventory_type": inventario.inventory_type,
+                }
+
+                posteriores = (Inventario.objects
+                            .select_for_update()
+                            .filter(**filtro, id__gt=inventario.id)
+                            .order_by("id"))
+
+                for inv in posteriores:
+                    inv.saldo_almacen = (inv.saldo_almacen or 0) + efecto
+                    inv.save(update_fields=["saldo_almacen"])
+
+            return Response({"message": "Inventario actualizado exitosamente.",
+                            "inventario": serializer.data},
+                            status=status.HTTP_200_OK)
