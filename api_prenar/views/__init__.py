@@ -49,3 +49,5 @@ from .detailPedidoEspecificoView import PedidoDetailEspecificoView
 from .inventarioDetailView import InventarioEspecificoUpdateView
 from .despachoConsecutivoNumeroCargueView import NextCargoNumberView
 from .controlProduccionVersionDosView import PedidosProduccionView
+from .pedidoCompletadoListaGeneralView import PedidoCompletadoListaGeneralView
+from .pedidoPendienteListaGeneralView import PedidoPendienteListaGeneralView
