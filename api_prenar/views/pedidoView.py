@@ -25,7 +25,7 @@ class PedidoView(APIView):
         end_date = request.query_params.get('end_date', None)
 
         # Crear filtros para los pedidos
-        filters = Q(id_client=cliente)
+        filters = Q(id_client=cliente)& Q(state=1)
         if order_code:
             filters &= Q(order_code__icontains=order_code)
         if start_date and end_date:

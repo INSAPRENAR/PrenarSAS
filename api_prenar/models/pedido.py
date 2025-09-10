@@ -11,7 +11,7 @@ class Pedido(models.Model):
     address=models.CharField(max_length=255, null=True, blank=True)
     phone=models.CharField(max_length=15, null=True, blank=True)
     total=models.FloatField(default=0.0)
-    total_discount_ordered=models.IntegerField(default=0,null=True, blank=True)
+    total_discount_ordered=models.FloatField(default=0.0,null=True, blank=True)
     state=models.IntegerField()
     outstanding_balance=models.FloatField(default=0.0)
     products=models.JSONField()

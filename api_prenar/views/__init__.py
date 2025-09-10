@@ -51,3 +51,4 @@ from .despachoConsecutivoNumeroCargueView import NextCargoNumberView
 from .controlProduccionVersionDosView import PedidosProduccionView
 from .pedidoCompletadoListaGeneralView import PedidoCompletadoListaGeneralView
 from .pedidoPendienteListaGeneralView import PedidoPendienteListaGeneralView
+from .pedidoCompletadoView import PedidoCompletadosView
