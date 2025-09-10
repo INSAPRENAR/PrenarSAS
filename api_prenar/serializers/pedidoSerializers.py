@@ -34,6 +34,18 @@ class PedidoSerializer(serializers.ModelSerializer):
         total_general = 0
 
         for product in products:
+            
+            try:
+                descuento_total = float(product.get('descuento_total', 0) or 0)
+                iva = float(product.get('iva', 0) or 0)
+            except (TypeError, ValueError):
+                raise serializers.ValidationError("Valores numéricos inválidos en IVA/descuento.")
+
+            if descuento_total < 0:
+                raise serializers.ValidationError("El descuento del producto no puede ser negativo.")
+            if iva < 0:
+                raise serializers.ValidationError("El IVA no puede ser negativo.")
+
             cantidad = product.get('cantidad_unidades', 0)
             usar_descuento = product.get('usar_descuento', False)
             iva = product.get('iva', 0)
