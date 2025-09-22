@@ -52,3 +52,4 @@ from .controlProduccionVersionDosView import PedidosProduccionView
 from .pedidoCompletadoListaGeneralView import PedidoCompletadoListaGeneralView
 from .pedidoPendienteListaGeneralView import PedidoPendienteListaGeneralView
 from .pedidoCompletadoView import PedidoCompletadosView
+from .clientesCompletadosView import ClientesCompletadosView
