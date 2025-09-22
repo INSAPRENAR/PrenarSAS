@@ -13,8 +13,7 @@ class PedidoPendienteListaGeneralView(APIView):
 
         # Base: solo pedidos con state = 1
         pedidos = (Pedido.objects
-                   .select_related('id_client')
-                   .filter(state=1))
+                   .select_related('id_client'))
 
         # Aplicar filtros
         if order_code:

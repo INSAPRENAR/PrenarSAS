@@ -14,7 +14,7 @@ class ClientesView(APIView):
         # incluimos el número de pedidos pendientes (state=1) por cada cliente
         clientes = Cliente.objects.annotate(
             pedidos_pendientes=Count('pedidos', filter=Q(pedidos__state=1))
-        )
+        ).filter(pedidos_pendientes__gt=0)
 
         # Aplicar el filtro por nombre (búsqueda parcial e insensible a mayúsculas/minúsculas)
         if name:
