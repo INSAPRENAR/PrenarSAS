@@ -16,6 +16,8 @@ class Pedido(models.Model):
     outstanding_balance=models.FloatField(default=0.0)
     products=models.JSONField()
     company=models.IntegerField(choices=OPTIONS_COMPANY)
+    trip_number=models.IntegerField(null=True, blank=True)
+    trip_valor=models.FloatField(null=True, blank=True, default=0.0)
     email_user=models.EmailField()
     registration_date=models.DateField(auto_now_add=True)
     #cantidad=models.IntegerField() ver si ó no
