@@ -100,6 +100,11 @@ class PedidoSerializer(serializers.ModelSerializer):
             # Calcula el total aplicando el descuento porcentual
             total_general = total_general - (total_general * (descuento / 100))
         
+        # sumar viajes si se envían
+        trip_number = validated_data.get('trip_number') or 0
+        trip_valor = validated_data.get('trip_valor') or 0.0
+        total_general += (trip_number * trip_valor)
+        
         # Truncar el total general a dos decimales sin redondear
         total_general = trunc_float(total_general)
         validated_data['total'] = total_general
@@ -180,15 +185,37 @@ class PedidoDetailSerializer(serializers.ModelSerializer):
         if total_discount_ordered > 0:
             descuento_general= total_calculado * (total_discount_ordered / 100)
             total_calculado -= descuento_general
+        # --- VIAJES (NUEVO) ---
+        # Si no envían estos campos, se toman como 0 por defecto
+        trip_number = data.get('trip_number', 0)
+        trip_valor = data.get('trip_valor', 0.0)
 
-        # Actualización del estado
-        if todos_despachados:
-            data['state'] = 2  # Todos los productos están despachados
-        else:
-            data['state'] = 1  # Al menos un producto no está despachado
+        # Normalizar y validar
+        try:
+            trip_number = int(trip_number or 0)
+        except (TypeError, ValueError):
+            raise serializers.ValidationError("El campo 'trip_number' debe ser un entero.")
 
-        # Truncar a dos decimales sin redondear
-        total_truncado = Decimal(total_calculado).quantize(Decimal('0.00'), rounding=ROUND_DOWN)
+        try:
+            trip_valor = float(trip_valor or 0.0)
+        except (TypeError, ValueError):
+            raise serializers.ValidationError("El campo 'trip_valor' debe ser numérico.")
+
+        if trip_number < 0:
+            raise serializers.ValidationError("El campo 'trip_number' no puede ser negativo.")
+        if trip_valor < 0:
+            raise serializers.ValidationError("El campo 'trip_valor' no puede ser negativo.")
+
+        trip_total = trip_number * trip_valor
+
+        # Sumar viajes al total final
+        total_calculado += trip_total
+
+        # --- ESTADO ---
+        data['state'] = 2 if todos_despachados else 1
+
+        # --- TRUNCAR SIN REDONDEO ---
+        total_truncado = Decimal(str(total_calculado)).quantize(Decimal('0.00'), rounding=ROUND_DOWN)
         data['total'] = float(total_truncado)
 
         return data
