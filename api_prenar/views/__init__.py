@@ -53,3 +53,5 @@ from .pedidoCompletadoListaGeneralView import PedidoCompletadoListaGeneralView
 from .pedidoPendienteListaGeneralView import PedidoPendienteListaGeneralView
 from .pedidoCompletadoView import PedidoCompletadosView
 from .clientesCompletadosView import ClientesCompletadosView
+from .viajeView import ViajeCreateView
+from .ViajeDetailView import ViajeDetailView
