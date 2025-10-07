@@ -59,9 +59,8 @@ class ConsumoMaterialView(APIView):
 
                 )
 
-                if unit_value == 1:
-                    categoria_material.stock_quantity -=total
-                    categoria_material.save()
+                categoria_material.stock_quantity -=total
+                categoria_material.save()
                     
                 return Response(
                     {"message": "Material registrado y stock actualizado.", "data": ConsumoMaterialSerializer(nuevo_consumo_material).data},

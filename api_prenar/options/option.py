@@ -48,7 +48,8 @@ OPTIONS_MATERIAL=(
 
 OPTIONS_MATERIAL_MEDIDA=(
     (1, 'Bultos'),
-    (2, 'Metros cubicos'),
+    (2, 'Kilogramos'),
+    (3, 'metros'),
 )
 
 MATERIAL_CONSUMPTION_UNIT=(

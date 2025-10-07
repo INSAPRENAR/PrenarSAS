@@ -12,6 +12,7 @@ class MaterialSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class CategoriaMaterialSerializer(serializers.ModelSerializer):
+    extent_display = serializers.CharField(source='get_extent_display', read_only=True)
     class Meta:
         model = CategoriaMaterial
-        fields = '__all__'
+        fields = ['id', 'name', 'color', 'stock_quantity', 'extent', 'extent_display']
