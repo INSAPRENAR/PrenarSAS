@@ -1,9 +1,11 @@
 from rest_framework.views import APIView
-from api_prenar.serializers.calendarioSerializers import CalendarioSerializer, CalendarioTipo1Serializer, CalendarioTipo2Serializer
+from api_prenar.serializers.calendarioSerializers import CalendarioSerializer, CalendarioListSerializer, CalendarioTipo1Serializer, CalendarioTipo2Serializer
 from rest_framework.response import Response
 from rest_framework import status, pagination
 from api_prenar.models import Calendario
 from django.db.models import Q
+from datetime import datetime
+from rest_framework.pagination import PageNumberPagination
 
 class CalendarioProduccionView(APIView):
 
@@ -26,81 +28,40 @@ class CalendarioProduccionView(APIView):
                 {"message": "Ocurrió un error al registrar el calendario.", "error": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-    
-    def get(self, request, tipo=None):
+
+    def put(self, request, calendario_id):
         try:
-            # Obtener parámetros de filtro desde la URL
-            start_date = request.query_params.get('start_date', None)
-            end_date = request.query_params.get('end_date', None)
-            order_code = request.query_params.get('order_code', None)
-            product_name = request.query_params.get('product_name', None)
-            # Filtrar los calendarios según el tipo
-            if tipo == 1:
-                calendarios = Calendario.objects.filter(type=1)
-                serializer_class = CalendarioTipo1Serializer
-            elif tipo == 2:
-                calendarios = Calendario.objects.filter(type=2)
-                serializer_class = CalendarioTipo2Serializer
-            else:
+            try:
+                instance = Calendario.objects.get(id=calendario_id)
+            except Calendario.DoesNotExist:
                 return Response(
-                    {"data": [], "message": "Tipo no válido."},
-                    status=status.HTTP_400_BAD_REQUEST
+                    {"message": f"No se encontró el calendario con ID {calendario_id}."},
+                    status=status.HTTP_404_NOT_FOUND
                 )
-            
-            # Construir el filtro adicional utilizando objetos Q
-            filters = Q()
-            # Filtro por rango de fecha en calendar_date
-            if start_date and end_date:
-                filters &= Q(calendar_date__gte=start_date, calendar_date__lte=end_date)
-            elif start_date:
-                filters &= Q(calendar_date__gte=start_date)
-            elif end_date:
-                filters &= Q(calendar_date__lte=end_date)
 
-            # Filtro por order_code en el modelo Pedido (relacionado mediante id_pedido)
-            if order_code:
-                filters &= Q(id_pedido__order_code__icontains=order_code)
-
-            # Filtro por name en el modelo Producto (relacionado mediante id_producto)
-            if product_name:
-                filters &= Q(id_producto__name__icontains=product_name)
-            
-            # Aplicar los filtros adicionales al queryset
-            calendarios = calendarios.filter(filters)
-
-            # Ordenar los calendarios por '-id'
-            calendarios = calendarios.order_by('-id')
-
-            # Verificar si hay calendarios para el tipo dado
-            if not calendarios.exists():
+            # partial=True: permite actualizar solo algunos campos
+            serializer = CalendarioSerializer(instance, data=request.data, partial=True)
+            if serializer.is_valid():
+                updated = serializer.save()
                 return Response(
-                    {"data": [], "message": "No se encontraron calendarios para este tipo."},
+                    {
+                        "message": "Calendario actualizado exitosamente.",
+                        "data": CalendarioSerializer(updated).data
+                    },
                     status=status.HTTP_200_OK
                 )
-
-            # Configurar la paginación
-            paginator = pagination.PageNumberPagination()
-            paginator.page_size = 20  # Define el número de calendarios por página
-            paginated_calendarios = paginator.paginate_queryset(calendarios, request)
-
-            # Serializar los calendarios paginados
-            serializer = serializer_class(paginated_calendarios, many=True)
-
-            # Preparar la respuesta paginada con la estructura deseada
-            response_data = {
-                "data": serializer.data,
-                "count": paginator.page.paginator.count,
-                "next": paginator.get_next_link(),
-                "previous": paginator.get_previous_link(),
-            }
-
-            return Response(response_data, status=status.HTTP_200_OK)
+            else:
+                return Response(
+                    {"message": "Error en los datos enviados.", "errors": serializer.errors},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
 
         except Exception as e:
             return Response(
-                {"data": [], "message": "Ocurrió un error al obtener los calendarios.", "error": str(e)},
+                {"message": "Ocurrió un error al actualizar el calendario.", "error": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+    
     
     def delete(self, request, calendario_id=None):
         if not calendario_id:
@@ -129,4 +90,56 @@ class CalendarioProduccionView(APIView):
             return Response(
                 {"message": "Ocurrió un error al eliminar el calendario.", "error": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    def get(self, request):
+        try:
+            start_from = request.query_params.get('start_date_from')
+            start_to = request.query_params.get('start_date_to')
+
+            qs = Calendario.objects.all()
+
+            # Parse helper
+            def parse_date(s):
+                return datetime.strptime(s, '%Y-%m-%d').date()
+
+            # Filtro SOLO por start_date (rango opcional)
+            if start_from and start_to:
+                d_from = parse_date(start_from)
+                d_to = parse_date(start_to)
+                qs = qs.filter(start_date__range=(d_from, d_to))
+            elif start_from:
+                d_from = parse_date(start_from)
+                qs = qs.filter(start_date__gte=d_from)
+            elif start_to:
+                d_to = parse_date(start_to)
+                qs = qs.filter(start_date__lte=d_to)
+
+            # Orden fijo por id descendente
+            qs = qs.order_by('-id')
+
+            if not qs.exists():
+                return Response([], status=status.HTTP_200_OK)
+
+            # Paginación
+            paginator = PageNumberPagination()
+            paginator.page_size = 20  # ajusta si quieres
+            page = paginator.paginate_queryset(qs, request)
+
+            serializer = CalendarioListSerializer(page, many=True)
+            return paginator.get_paginated_response(serializer.data)
+
+        except ValueError as e:
+            # errores de parseo de fecha
+            return Response(
+                {
+                    "message": "Parámetros de fecha inválidos. Usa formato YYYY-MM-DD.",
+                    "error": str(e),
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        except Exception as e:
+            return Response(
+                {"message": "Error al obtener los calendarios.", "error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )

@@ -55,3 +55,8 @@ from .pedidoCompletadoView import PedidoCompletadosView
 from .clientesCompletadosView import ClientesCompletadosView
 from .viajeView import ViajeCreateView
 from .ViajeDetailView import ViajeDetailView
+from .calendarioProduccionDetail import CalendarioDetailEspecificoView
+from .calendarioDespachoView import CalendarioDespachoView
+from .calendarioDespachoDetailView import CalendarioDespachoDetailEspecificoView
+from .reporteProduccionExcel import DownloadCronogramaProduccionView
+from .reporteDespachoExcel import DownloadCronogramaDespachoView

@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import Register, loginView, UsersView, LogoutView, ListUserView, UserView, UserDetail, ClientesView, ClienteEspecificoView, PedidoView, PagoView, InventarioView, ProductoView, ProductoEspecificoView, DespachoView, ProductosPedidoDespachoView, ListaNumerosPedidosView, control_produccion_agrupado, InventarioPorProductoView, CalendarioProduccionView, CalendarioEspecificoView, MaterialView, MaterialDetailView, ConsumoMaterialView, CategoriaMaterialDetail, CategoriaMaterialView, PedidoDetailView, ProductosPedidoView, PedidoCountView, ProductosEnPedidosPendientesView, CantidadesTotalesProductosPendientesView, PedidoSaldosPendientesView, PedidoProductosUnidadesSolicitadasView, CalendarioProduccionStateDetalleView, CalendarioDespachoStateDetalleView, ListaProductoView, UpdatePedidoProductControl, control_produccion_agrupado_completados, UpdatePedidoProductControlCompletados, ConsumoMaterialListView, reportePedidosResumenView, downloadPedidosResumenView, ReporteResumenPagoView, downloadResumenPagoView, OrdenCarguePDFView, DespachoEspecificoView, GeneracionPasswordView, PedidoDetailEspecificoView, InventarioEspecificoUpdateView, NextCargoNumberView, PedidosProduccionView, PedidoCompletadoListaGeneralView, PedidoPendienteListaGeneralView, PedidoCompletadosView, ClientesCompletadosView, ViajeCreateView, ViajeDetailView
+from .views import Register, loginView, UsersView, LogoutView, ListUserView, UserView, UserDetail, ClientesView, ClienteEspecificoView, PedidoView, PagoView, InventarioView, ProductoView, ProductoEspecificoView, DespachoView, ProductosPedidoDespachoView, ListaNumerosPedidosView, control_produccion_agrupado, InventarioPorProductoView, CalendarioProduccionView, CalendarioEspecificoView, MaterialView, MaterialDetailView, ConsumoMaterialView, CategoriaMaterialDetail, CategoriaMaterialView, PedidoDetailView, ProductosPedidoView, PedidoCountView, ProductosEnPedidosPendientesView, CantidadesTotalesProductosPendientesView, PedidoSaldosPendientesView, PedidoProductosUnidadesSolicitadasView, CalendarioProduccionStateDetalleView, CalendarioDespachoStateDetalleView, ListaProductoView, UpdatePedidoProductControl, control_produccion_agrupado_completados, UpdatePedidoProductControlCompletados, ConsumoMaterialListView, reportePedidosResumenView, downloadPedidosResumenView, ReporteResumenPagoView, downloadResumenPagoView, OrdenCarguePDFView, DespachoEspecificoView, GeneracionPasswordView, PedidoDetailEspecificoView, InventarioEspecificoUpdateView, NextCargoNumberView, PedidosProduccionView, PedidoCompletadoListaGeneralView, PedidoPendienteListaGeneralView, PedidoCompletadosView, ClientesCompletadosView, ViajeCreateView, ViajeDetailView, CalendarioDetailEspecificoView, CalendarioDespachoView, CalendarioDespachoDetailEspecificoView, DownloadCronogramaProduccionView, DownloadCronogramaDespachoView
 
 urlpatterns = [
     path('register', Register.as_view(), name='register'),
@@ -38,10 +38,10 @@ urlpatterns = [
     path('inventario/producto', InventarioView.as_view(), name='inventario-producto'),
     path('inventarios/lista/<int:id_producto>/<int:categori>/', InventarioPorProductoView.as_view(), name='inventario-por-producto'),
     path('calendario/register', CalendarioProduccionView.as_view(), name='calendario-register'),
-    path('calendario/list/<int:tipo>', CalendarioProduccionView.as_view(), name='calendario-lista'),
+    path('calendario/list', CalendarioProduccionView.as_view(), name='calendario-lista'),
     path('calendario/<str:calendario_id>', CalendarioEspecificoView.as_view(), name='calendario-detail'),
     path('calendario/<str:calendario_id>/update', CalendarioEspecificoView.as_view(), name='calendario-update'),
-    path('calendario/<int:calendario_id>/delete/', CalendarioProduccionView.as_view(), name='calendario-delete'),
+    path('cronograma/produccion/<int:calendario_id>/delete/', CalendarioProduccionView.as_view(), name='calendario-delete'),
     path('material/register', MaterialView.as_view(), name='material-register'),
     path('material/type', MaterialView.as_view(), name='material-type'),
     path('material/list/<int:categoria_id>/', MaterialDetailView.as_view(), name='material-list'),
@@ -92,4 +92,14 @@ urlpatterns = [
     path('viaje/<int:viaje_id>/delete', ViajeCreateView.as_view(), name='viaje-delete'),
     path('viaje/<int:viaje_id>/update', ViajeCreateView.as_view(), name='viaje-update'),
     path('viaje/detail/<int:viaje_id>', ViajeDetailView.as_view(), name='viaje-detail'),
+    path('cronograma/producciones/', CalendarioProduccionView.as_view(), name='cronograma-producciones'),
+    path('cronograma/produccion/<int:calendario_id>/update', CalendarioProduccionView.as_view(), name='calendario-update'),
+    path('cronograma/produccion/<int:calendario_id>/detail', CalendarioDetailEspecificoView.as_view(), name='cronograma-produccion-detail'),
+    path('cronograma/despachos/', CalendarioDespachoView.as_view(), name='cronograma-despachos'),
+    path('calendario/Despacho/register', CalendarioDespachoView.as_view(), name='calendario-despacho-register'),
+    path('cronograma/despacho/<int:calendario_id>/update', CalendarioDespachoView.as_view(), name='calendario-despacho-update'),
+    path('cronograma/despacho/<int:calendario_id>/detail', CalendarioDespachoDetailEspecificoView.as_view(), name='cronograma-despacho-detail'),
+    path('cronograma/despacho/<int:calendario_id>/delete/', CalendarioDespachoView.as_view(), name='calendario-despacho-delete'),
+    path('reporte/cronograma/produccion/download/', DownloadCronogramaProduccionView.as_view(), name='reporte-produccion'),
+    path('reporte/cronograma/despacho/download/', DownloadCronogramaDespachoView.as_view(), name='reporte-despacho'),
 ]

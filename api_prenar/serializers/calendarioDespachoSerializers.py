@@ -1,21 +1,35 @@
 from rest_framework import serializers
-from api_prenar.models import Calendario, Pedido
 from decimal import Decimal, ROUND_HALF_UP
+from api_prenar.models import CalendarioDespacho, Pedido
+
+from api_prenar.models import CalendarioDespacho
 
 try:
     from api_prenar.models import Producto  # id, name, color, unit_price, discounted_unit_price
 except Exception:
-    Producto = None  # Evita romper import si el nombre difiere; ver nota en _get_product_from_catalog
+    Producto = None
 
-class ProductionItemSerializer(serializers.Serializer):
+class CalendarioListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CalendarioDespacho
+        fields = [
+            'id',
+            'start_date',
+            'end_date',
+            'dispatch',
+            'observation',
+            'email_user',
+            'registration_date',
+        ]
+
+class DespachoItemSerializer(serializers.Serializer):
     fecha = serializers.DateField()
-    # Puede venir vacío o no presente (registro sin pedido)
-    pedido_id = serializers.IntegerField(required=False, allow_null=True)
+    pedido_id = serializers.IntegerField(required=False, allow_null=True)  # puede venir null
     referencia = serializers.IntegerField()
     programacion_cantidad = serializers.IntegerField(min_value=0)
     produccion = serializers.IntegerField(min_value=0)
 
-    # Campos calculados (opcionales, el backend los rellena)
+    # Calculados por el backend
     name = serializers.CharField(required=False, allow_blank=True)
     color = serializers.CharField(required=False, allow_blank=True)
     valor_unitario = serializers.DecimalField(max_digits=12, decimal_places=2, required=False)
@@ -24,34 +38,35 @@ class ProductionItemSerializer(serializers.Serializer):
     name_pedido = serializers.CharField(required=False, allow_blank=True)
 
 
-class CalendarioSerializer(serializers.ModelSerializer):
-    production = ProductionItemSerializer(many=True)
-    pending_product_balance = serializers.JSONField(required=False)
+class CalendarioDespachoSerializer(serializers.ModelSerializer):
+    # Campo principal para despachos
+    dispatch = DespachoItemSerializer(many=True)
+    pending_dispatch_balance = serializers.JSONField(required=False)
 
     class Meta:
-        model = Calendario
+        model = CalendarioDespacho
         fields = [
             'id',
             'start_date',
             'end_date',
-            'production',
-            'pending_product_balance',
+            'dispatch',
+            'pending_dispatch_balance',
             'observation',
             'email_user',
             'registration_date',
         ]
-        read_only_fields = ['pending_product_balance', 'registration_date']
+        read_only_fields = ['pending_dispatch_balance', 'registration_date']
 
     # ----------------- Helpers -----------------
-
     def _money(self, value):
-        """Redondeo financiero a 2 decimales (Decimal)."""
+        """Redondeo a 2 decimales (Decimal)."""
         return Decimal(value).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
 
     def _get_product_from_order(self, pedido_id: int, referencia: int):
         """
-        Busca el producto en Pedido.products (lista de dicts) por 'referencia'.
-        Espera llaves: referencia, name, color, vr_unitario, vr_unitario_descuento, descuento_total, iva
+        Busca el producto en Pedido.products por 'referencia'.
+        Llaves esperadas en cada producto del pedido:
+          referencia, name, color, vr_unitario, vr_unitario_descuento, descuento_total, iva
         """
         try:
             pedido = Pedido.objects.get(id=pedido_id)
@@ -82,8 +97,8 @@ class CalendarioSerializer(serializers.ModelSerializer):
 
     def _get_product_from_catalog(self, referencia: int):
         """
-        Modo SIN PEDIDO: usa la 'referencia' como ID del catálogo general (Producto.id).
-        Mapea unit_price -> vr_unitario y discounted_unit_price -> vr_unitario_descuento.
+        SIN PEDIDO: usa la 'referencia' como Producto.id del catálogo.
+        Mapea: unit_price -> vr_unitario, discounted_unit_price -> vr_unitario_descuento.
         """
         if Producto is None:
             raise serializers.ValidationError(
@@ -109,22 +124,22 @@ class CalendarioSerializer(serializers.ModelSerializer):
 
     def _compute_items_and_balance(self, items_in):
         """
-        Recibe items validados (con fechas como date y cantidades como int),
+        Recibe items validados (fecha=date, cantidades=int),
         calcula campos y devuelve:
-          - items_out: lista de dicts JSON-serializables
-          - pending_balance: lista de dicts JSON-serializables
+          - items_out (JSON-friendly)
+          - pending_balance (JSON-friendly) agrupado por referencia
         """
         items_out = []
         saldo_por_ref = {}
 
         for it in items_in:
-            fecha = it['fecha']                         # date
-            pedido_id = it.get('pedido_id', None)       # int | None
-            referencia = it['referencia']               # int
+            fecha = it['fecha']
+            pedido_id = it.get('pedido_id', None)
+            referencia = it['referencia']
             prog = int(it['programacion_cantidad'])
             prod_cant = int(it['produccion'])
 
-            # Obtener info del producto según haya o no pedido
+            # Info de producto
             if pedido_id is not None:
                 prod = self._get_product_from_order(pedido_id, referencia)
                 order_code = prod.get('order_code', '')
@@ -146,21 +161,21 @@ class CalendarioSerializer(serializers.ModelSerializer):
             total_prog = self._money(val_final * Decimal(prog))
             saldo = prog - prod_cant
 
-            # Acumular saldo por referencia
+            # Agrupar saldo por referencia
             saldo_por_ref[referencia] = saldo_por_ref.get(referencia, 0) + saldo
 
-            # **IMPORTANTE**: convertir a JSON-friendly antes de meter a JSONField
+            # JSON-friendly
             items_out.append({
-                "fecha": fecha.isoformat(),               # str
-                "pedido_id": pedido_id,                   # int | None
-                "referencia": referencia,                 # int
-                "name": prod['name'],                     # str
-                "color": prod['color'],                   # str
-                "valor_unitario": float(val_final),       # float
-                "programacion_cantidad": prog,            # int
-                "total_programacion": float(total_prog),  # float
-                "produccion": prod_cant,                  # int
-                "saldo": saldo,                            # int
+                "fecha": fecha.isoformat(),
+                "pedido_id": pedido_id,
+                "referencia": referencia,
+                "name": prod['name'],
+                "color": prod['color'],
+                "valor_unitario": float(val_final),
+                "programacion_cantidad": prog,
+                "total_programacion": float(total_prog),
+                "produccion": prod_cant,  # aquí representa "despachado"
+                "saldo": saldo,
                 "name_pedido": order_code,
             })
 
@@ -168,87 +183,35 @@ class CalendarioSerializer(serializers.ModelSerializer):
             {"referencia": ref, "total_general": total}
             for ref, total in saldo_por_ref.items()
         ]
-
         return items_out, pending_balance
 
     # ----------------- create -----------------
-
     def create(self, validated_data):
-        items_in = validated_data.pop('production', [])
+        items_in = validated_data.pop('dispatch', [])
         items_out, pending_balance = self._compute_items_and_balance(items_in)
 
-        instance = Calendario.objects.create(
+        instance = CalendarioDespacho.objects.create(
             start_date=validated_data['start_date'],
             end_date=validated_data['end_date'],
-            production=items_out,                         # JSON puro
-            pending_product_balance=pending_balance,      # JSON puro
+            dispatch=items_out,                           # JSON puro
+            pending_dispatch_balance=pending_balance,     # JSON puro
             observation=validated_data.get('observation', ''),
             email_user=validated_data['email_user'],
         )
         return instance
 
     # ----------------- update -----------------
-
     def update(self, instance, validated_data):
-        """
-        Hace exactamente lo mismo que create, pero asignando sobre 'instance'.
-        Asegura convertir fechas a str y Decimals a float ANTES de guardar en JSONField,
-        para evitar 'Object of type date is not JSON serializable'.
-        """
-        # Campos simples
         instance.start_date = validated_data.get('start_date', instance.start_date)
         instance.end_date = validated_data.get('end_date', instance.end_date)
         instance.observation = validated_data.get('observation', instance.observation)
         instance.email_user = validated_data.get('email_user', instance.email_user)
 
-        # Recalcular production y pending_product_balance si vienen en el payload
-        if 'production' in validated_data:
-            items_in = validated_data['production']
+        if 'dispatch' in validated_data:
+            items_in = validated_data['dispatch']
             items_out, pending_balance = self._compute_items_and_balance(items_in)
-            instance.production = items_out                    # JSON puro
-            instance.pending_product_balance = pending_balance # JSON puro
+            instance.dispatch = items_out
+            instance.pending_dispatch_balance = pending_balance
 
         instance.save()
         return instance
-
-class CalendarioListSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Calendario
-        fields = [
-            'id',
-            'start_date',
-            'end_date',
-            'production',
-            'pending_product_balance',
-            'observation',
-            'email_user',
-            'registration_date',
-        ]
-
-class CalendarioTipo1Serializer(serializers.ModelSerializer):
-    order_code = serializers.SerializerMethodField()
-    name = serializers.SerializerMethodField()
-    color_producto=serializers.SerializerMethodField()
-    class Meta:
-        model = Calendario
-        fields = ['id','calendar_date', 'expected_date', 'id_pedido','order_code', 'id_producto','name','color_producto', 'amount', 'machine', 'state', 'observation']
-    def get_order_code(self, obj):
-        return obj.id_pedido.order_code if obj.id_pedido else None
-    def get_name(self, obj):
-        return obj.id_producto.name if obj.id_producto else None
-    def get_color_producto(self, obj):
-        return obj.id_producto.color if obj.id_producto else None
-
-class CalendarioTipo2Serializer(serializers.ModelSerializer):
-    order_code = serializers.SerializerMethodField()
-    name = serializers.SerializerMethodField()
-    color_producto=serializers.SerializerMethodField()
-    class Meta:
-        model = Calendario
-        fields = ['id','calendar_date', 'expected_date', 'id_pedido', 'order_code', 'id_producto','name','color_producto', 'amount', 'dispatch_time', 'state', 'observation']
-    def get_order_code(self, obj):
-        return obj.id_pedido.order_code if obj.id_pedido else None
-    def get_name(self, obj):
-        return obj.id_producto.name if obj.id_producto else None
-    def get_color_producto(self, obj):
-        return obj.id_producto.color if obj.id_producto else None
