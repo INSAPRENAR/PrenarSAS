@@ -138,21 +138,18 @@ class PedidoView(APIView):
                 # Verificar si existen inventarios asociados a este pedido
                 existe_inventario = Inventario.objects.filter(id_pedido=pedido).exists()
                 
-                # Verificar si existen calendarios asociados a este pedido
-                existe_calendario = Calendario.objects.filter(id_pedido=pedido).exists()
 
                 # Verificar si existen pagos asociados a este pedido
                 existe_pagos = Pago.objects.filter(id_pedido=pedido).exists()
                 
                 # Si existen despachos, inventarios o calendarios asociados, no permitir la eliminación
-                if existe_despacho or existe_inventario or existe_calendario or existe_pagos:
+                if existe_despacho or existe_inventario or  existe_pagos:
                     mensajes = []
                     if existe_despacho:
                         mensajes.append("tiene despachos asociados.")
                     if existe_inventario:
                         mensajes.append("tiene registros en inventarios asociados.")
-                    if existe_calendario:
-                        mensajes.append("tiene registros en calendarios asociados.")
+                    
                     if existe_pagos:
                         mensajes.append("tiene registros en pagos asociados.")
                     
