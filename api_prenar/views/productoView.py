@@ -124,18 +124,14 @@ class ProductoView(APIView):
         # Verificar asociaciones en Inventario
         inventario_asociado = Inventario.objects.filter(id_producto=producto).exists()
         
-        # Verificar asociaciones en Calendario
-        calendario_asociado = Calendario.objects.filter(id_producto=producto).exists()
         
         # Si hay alguna asociación, no permitir la eliminación
-        if pedidos_asociados or inventario_asociado or calendario_asociado:
+        if pedidos_asociados or inventario_asociado:
             mensajes = []
             if pedidos_asociados:
                 mensajes.append("Este producto está asociado con uno o más pedidos.")
             if inventario_asociado:
                 mensajes.append("Este producto está asociado con el inventario.")
-            if calendario_asociado:
-                mensajes.append("Este producto está asociado con el calendario.")
             
             mensaje_completo = " ".join(mensajes)
             return Response(
