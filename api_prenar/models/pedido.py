@@ -20,6 +20,7 @@ class Pedido(models.Model):
     trip_valor=models.FloatField(null=True, blank=True, default=0.0)
     email_user=models.EmailField()
     registration_date=models.DateField(auto_now_add=True)
+    modification_date = models.DateField(null=True, blank=True)
     #cantidad=models.IntegerField() ver si ó no
 
     def save(self, *args, **kwargs):
