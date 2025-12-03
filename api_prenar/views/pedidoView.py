@@ -7,6 +7,7 @@ from django.db import transaction
 from rest_framework.pagination import PageNumberPagination
 from django.db.models import Q
 from django.db.models import Sum
+from django.utils import timezone
 
 class PedidoView(APIView):
 
@@ -98,6 +99,8 @@ class PedidoView(APIView):
         if serializer.is_valid():
             # Guarda los cambios en el pedido
             updated_pedido = serializer.save()
+
+            updated_pedido.modification_date = timezone.now().date()
 
             # Aquí es importante actualizar el campo `outstanding_balance` directamente
             total_calculado = 0.0
