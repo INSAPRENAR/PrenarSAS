@@ -4,4 +4,5 @@ class GeneracionPassword(models.Model):
     id=models.AutoField(primary_key=True)
     description=models.CharField(max_length=255)
     password_generation=models.CharField(max_length=8)
+    estiva_price=models.FloatField(default=0.0)
     
