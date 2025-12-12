@@ -23,6 +23,16 @@ class DespachoView(APIView):
                 despacho_data = DespachoSerializer(despacho).data
                 # Se asume que despacho_data['products'] es una lista de diccionarios con los datos de cada producto
                 products = despacho_data.get("products", [])
+
+                estivas_sent = sum([p.get("numero_estibas", 0) for p in products])
+
+                # estiva_return puede venir None en BD
+                estiva_return = despacho_data.get("estiva_return") or 0
+                estiva_saldo = estivas_sent - estiva_return
+
+                despacho_data["estivas_sent"] = estivas_sent
+                despacho_data["estiva_saldo"] = estiva_saldo
+
                 # Crear un resumen de los productos: nombre (referencia) y cantidad
                 products_summary = ", ".join([
                     f"{p.get('name', 'Sin nombre')} (Ref: {p.get('referencia', '-')}, Cant: {p.get('cantidad', 0)})"
