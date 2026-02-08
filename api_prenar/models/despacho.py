@@ -20,6 +20,5 @@ class Despacho(models.Model):
     production_number=models.CharField(max_length=255,null=True, blank=True)
     observation=models.CharField(max_length=255,null=True, blank=True)
     dispatcher_state=models.IntegerField(choices=OPTIONS_DISPATCH_STATE, default=1)
-    estiva_return=models.IntegerField(null=True, blank=True)
     email_user=models.EmailField()
     registration_date=models.DateField(auto_now_add=True)
