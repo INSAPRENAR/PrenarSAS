@@ -11,3 +11,4 @@ from .consumo_material import ConsumoMaterial
 from .generacion_password import GeneracionPassword
 from .viaje import Viaje
 from .calendario_despacho import CalendarioDespacho
+from .estiva_devuelta import EstivaDevuelta

@@ -2,8 +2,11 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from api_prenar.serializers.despachoSerializers import DespachoSerializer
-from api_prenar.models import Pedido, Despacho, Producto
+from api_prenar.models import Pedido, Despacho, Producto, EstivaDevuelta
 from collections import OrderedDict
+from api_prenar.services.estivas import recalcular_remaining_estivas
+from django.db import transaction, models
+from rest_framework.exceptions import ValidationError
 
 class DespachoView(APIView):
 
@@ -26,12 +29,7 @@ class DespachoView(APIView):
 
                 estivas_sent = sum([p.get("numero_estibas", 0) for p in products])
 
-                # estiva_return puede venir None en BD
-                estiva_return = despacho_data.get("estiva_return") or 0
-                estiva_saldo = estivas_sent - estiva_return
-
                 despacho_data["estivas_sent"] = estivas_sent
-                despacho_data["estiva_saldo"] = estiva_saldo
 
                 # Crear un resumen de los productos: nombre (referencia) y cantidad
                 products_summary = ", ".join([
@@ -56,7 +54,7 @@ class DespachoView(APIView):
                 {"message": "Error al obtener los despachos.", "error": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-    
+    @transaction.atomic
     def post(self, request):
         serializer = DespachoSerializer(data=request.data)
         if not serializer.is_valid():
@@ -133,12 +131,17 @@ class DespachoView(APIView):
                 p.get('cantidades_despachadas', 0) == p.get('cantidad_unidades', 0)
                 for p in pedido.products
             )
-            pedido.state = 2 if all_fully else 1
+            saldo_pendiente = (pedido.outstanding_balance or 0) > 0.0001
+
+            # Solo COMPLETADO si está todo despachado y NO hay saldo pendiente
+            pedido.state = 2 if (all_fully and not saldo_pendiente) else 1
             pedido.products = pedido.products  # marca modificado
             pedido.save()
 
             # 6) Crear el despacho
             despacho = serializer.save()
+            # 7) IMPORTANTE: si ya existen estivas devueltas, recalcular el remaining_total
+            recalcular_remaining_estivas(pedido_id)
             return Response(
                 {
                     "message": "Despacho registrado exitosamente.",
@@ -157,73 +160,142 @@ class DespachoView(APIView):
                 {"message": "Error al registrar el despacho.", "error": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-    
+            
+    @transaction.atomic
     def put(self, request, despacho_id):
         try:
-            despacho = Despacho.objects.get(id=despacho_id)
-        except Despacho.DoesNotExist:
-            return Response(
-                {"message": "Despacho no encontrado."},
-                status=status.HTTP_404_NOT_FOUND
-            )
+            despacho = Despacho.objects.select_for_update().get(id=despacho_id)
+            pedido_id = despacho.id_pedido_id
 
-        serializer = DespachoSerializer(despacho, data=request.data)
+            estibas_old = self._estibas_en_despacho(despacho)
 
-        if serializer.is_valid():
+            # estibas nuevas vienen del request.data["products"]
+            products_new = (request.data.get("products") or [])
+            estibas_new = sum(int(p.get("numero_estibas") or 0) for p in products_new)
+
+            # total prestadas actual (incluye este despacho)
+            total_prestadas_actual = 0
+            for d in Despacho.objects.filter(id_pedido_id=pedido_id).only("products"):
+                total_prestadas_actual += sum(int(p.get("numero_estibas") or 0) for p in (d.products or []))
+
+            # total prestadas si se modifica este despacho
+            total_prestadas_mod = total_prestadas_actual - estibas_old + estibas_new
+            if total_prestadas_mod < 0:
+                total_prestadas_mod = 0
+
+            total_devueltas = self._total_devueltas(pedido_id)
+
+            if total_devueltas > total_prestadas_mod:
+                return Response(
+                    {
+                        "message": (
+                            "No se puede modificar este despacho porque dejaría inconsistencia "
+                            "con el registro de las estivas devueltas. "
+                            "Primero ajuste el registro de estivas devueltas en Resumen Pedido."
+                        )
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            serializer = DespachoSerializer(despacho, data=request.data)
+            serializer.is_valid(raise_exception=True)
             serializer.save()
+
+            recalcular_remaining_estivas(pedido_id)
+
             return Response(
                 {"message": "Despacho actualizado exitosamente.", "despacho": serializer.data},
                 status=status.HTTP_200_OK
             )
-        
-        return Response(
-            {"message": "Error al actualizar el despacho.", "errors": serializer.errors},
-            status=status.HTTP_400_BAD_REQUEST
-        )
+
+        except ValidationError as ve:
+            return Response({"message": "No se pudo actualizar.", "errors": ve.detail}, status=400)
     
+    @staticmethod
+    def _total_devueltas(pedido_id: int) -> int:
+        return (
+            EstivaDevuelta.objects
+            .filter(id_pedido_id=pedido_id)
+            .aggregate(s=models.Sum("estiva_amount_returned"))
+            .get("s") or 0
+        )
+
+    @staticmethod
+    def _estibas_en_despacho(despacho: Despacho) -> int:
+        return sum(int(p.get("numero_estibas") or 0) for p in (despacho.products or []))
+    
+    @transaction.atomic
     def delete(self, request, despacho_id):
         try:
-            # Obtener el despacho por su ID
-            despacho = Despacho.objects.get(id=despacho_id)
+            # Bloquea el despacho para evitar carreras
+            despacho = Despacho.objects.select_for_update().get(id=despacho_id)
             pedido = despacho.id_pedido
+            pedido_id = pedido.id
 
-            # Para cada producto incluido en el despacho,
-            # se busca el correspondiente en el JSON de productos del pedido
-            for despacho_prod in despacho.products:
-                referencia = despacho_prod.get('referencia')
-                amount_despacho = despacho_prod.get('cantidad', 0)
+            # 1) calcular estibas del despacho que se quiere borrar
+            estibas_despacho = self._estibas_en_despacho(despacho)
 
-                # Buscar el producto en el JSON del pedido que coincida con la referencia
+            # 2) total estibas prestadas actuales (sum de todos los despachos)
+            #    Reutilizamos tu función recalcular que internamente ya calcula total.
+            #    Pero aquí necesitamos el total: lo calculamos directo (rápido y claro)
+            total_prestadas_actual = 0
+            despachos_pedido = Despacho.objects.filter(id_pedido_id=pedido_id).only("products")
+            for d in despachos_pedido:
+                total_prestadas_actual += sum(int(p.get("numero_estibas") or 0) for p in (d.products or []))
+
+            # 3) total prestadas si se borra este despacho
+            total_prestadas_sin = total_prestadas_actual - estibas_despacho
+            if total_prestadas_sin < 0:
+                total_prestadas_sin = 0  # por seguridad
+
+            # 4) total devueltas registradas
+            total_devueltas = self._total_devueltas(pedido_id)
+
+            # 5) BLOQUEO: si ya devolvieron más de lo que quedaría prestado
+            if total_devueltas > total_prestadas_sin:
+                return Response(
+                    {
+                        "message": (
+                            "No se puede eliminar este despacho porque dejaría inconsistencia "
+                            "con el registro de las estivas devueltas. "
+                            "Primero ajuste el registro de estivas devueltas en Resumen Pedido."
+                        )
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # ===== SI PASA EL CHECK, AHÍ SÍ BORRAS =====
+
+            # (tu lógica de revertir cantidades_despachadas)
+            for despacho_prod in (despacho.products or []):
+                referencia = despacho_prod.get("referencia")
+                amount_despacho = despacho_prod.get("cantidad", 0)
+
                 producto_encontrado = None
-                for prod in pedido.products:
-                    if prod.get('referencia') == referencia:
+                for prod in (pedido.products or []):
+                    if prod.get("referencia") == referencia:
                         producto_encontrado = prod
                         break
 
                 if not producto_encontrado:
-                    # Si no se encuentra el producto, se puede optar por continuar o retornar error.
-                    # En este ejemplo se continúa con el siguiente producto.
                     continue
 
-                # Restar el valor de "amount" del despacho al campo "cantidades_despachadas"
-                if 'cantidades_despachadas' in producto_encontrado:
-                    nuevo_valor = producto_encontrado['cantidades_despachadas'] - amount_despacho
-                    # Evitar valores negativos
-                    producto_encontrado['cantidades_despachadas'] = nuevo_valor if nuevo_valor >= 0 else 0
+                if "cantidades_despachadas" in producto_encontrado:
+                    nuevo_valor = (producto_encontrado["cantidades_despachadas"] or 0) - (amount_despacho or 0)
+                    producto_encontrado["cantidades_despachadas"] = max(nuevo_valor, 0)
 
-            # Validar si para todos los productos del pedido se cumple que:
-            # cantidad_unidades <= cantidades_despachadas
-            all_fully_dispatched = True
-            for prod in pedido.products:
-                if prod.get('cantidad_unidades', 0) != prod.get('cantidades_despachadas', 0):
-                    all_fully_dispatched = False
-                    break
-
+            all_fully_dispatched = all(
+                (prod.get("cantidad_unidades", 0) == prod.get("cantidades_despachadas", 0))
+                for prod in (pedido.products or [])
+            )
             pedido.state = 2 if all_fully_dispatched else 1
-
-            # Guardar los cambios del pedido y eliminar el despacho
+            pedido.products = pedido.products
             pedido.save()
+
             despacho.delete()
+
+            # 6) recalcular remaining_total con el nuevo total de estibas despachadas
+            recalcular_remaining_estivas(pedido_id)
 
             return Response(
                 {"message": f"Despacho con ID {despacho_id} eliminado exitosamente."},
@@ -234,6 +306,12 @@ class DespachoView(APIView):
             return Response(
                 {"message": f"Despacho con ID {despacho_id} no encontrado."},
                 status=status.HTTP_404_NOT_FOUND
+            )
+        except ValidationError as ve:
+            # Si tu recalcular_remaining_estivas lanza ValidationError por cualquier razón
+            return Response(
+                {"message": "No se pudo completar la operación.", "errors": ve.detail},
+                status=status.HTTP_400_BAD_REQUEST
             )
         except Exception as e:
             return Response(

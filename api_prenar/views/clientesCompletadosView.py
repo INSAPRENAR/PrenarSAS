@@ -15,7 +15,7 @@ class ClientesCompletadosView(APIView):
             pedidos_completados=Count('pedidos', filter=Q(pedidos__state=2)),
             total_pedidos=Count('pedidos')
         ).filter(
-            Q(pedidos_completados__gt=0) | Q(total_pedidos=0)   # clientes con al menos 1 state=2 o con 0 pedidos
+            pedidos_completados__gt=0   # clientes con al menos 1 state=2
         )
 
         # Aplicar el filtro por nombre (búsqueda parcial e insensible a mayúsculas/minúsculas)

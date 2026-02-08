@@ -60,3 +60,4 @@ from .calendarioDespachoView import CalendarioDespachoView
 from .calendarioDespachoDetailView import CalendarioDespachoDetailEspecificoView
 from .reporteProduccionExcel import DownloadCronogramaProduccionView
 from .reporteDespachoExcel import DownloadCronogramaDespachoView
+from .estivaDevueltaView import EstivaDevueltaView
