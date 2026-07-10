@@ -44,12 +44,12 @@ class OrdenCarguePDFView(APIView):
                 cantidad_val = product.get('cantidad', product.get('cantidad_unidades', 0))
                 estibas_val = product.get('numero_estibas', 0)
                 products.append({
-                    "lote": product.get('lote'),
+                    "lote": "N/A" if product.get("lote") == "No aplica" else product.get("lote"),
                     "name": product.get('name'),
                     "color": product.get('color'),
                     "cantidad": int(cantidad_val or 0),
                     "referencia": product.get('referencia'),
-                    "numero_rotulo": product.get('numero_rotulo'),
+                    "numero_rotulo": "N/A" if product.get("numero_rotulo") == "No aplica" else product.get("numero_rotulo"),
                     "numero_estibas": int(estibas_val or 0),
                 })
 
